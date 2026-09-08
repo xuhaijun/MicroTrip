@@ -1,0 +1,48 @@
+name: Build Android App Bundle (AAB)
+
+on:
+  push:
+    tags:
+      - 'v*'            # 仅打 tag 时产出正式 AAB（如 v1.2.0）
+  workflow_dispatch:    # 允许手动触发
+
+jobs:
+  build-aab:
+    name: Build release AAB
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java (Android SDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.0'     # 与本地 pubspec 约束一致
+          channel: 'stable'
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Analyze (无致命错误才继续)
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test --no-pub
+
+      - name: Build App Bundle
+        # --release 产出 build/app/outputs/bundle/release/app-release.aab
+        run: flutter build appbundle --release --no-pub
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          retention-days: 30

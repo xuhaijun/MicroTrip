@@ -1,0 +1,79 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- ========== 权限声明（Phase 2） ========== -->
+    <!-- 网络权限：flutter_map 加载在线瓦片（OpenStreetMap）、天气 API 请求。release 包必需 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- 精确定位权限：GPS 轨迹录制（geolocator 必需） -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <!-- 粗略定位权限：WLAN/基站定位兜底，弱网场景降级使用 -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- 注：image_picker 走系统相机/相册 Intent，无需声明 CAMERA/READ_MEDIA_IMAGES 权限 -->
+    <!-- 后台定位权限（Phase 5 启用）：轨迹录制时 App 退后台仍持续记录 GPS -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+    <!-- 前台服务权限：轨迹录制保活 Service（flutter_background_service 必需） -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <!-- Android 14+：前台服务类型为 location 时必须声明对应权限 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <!-- ========== 权限声明（Phase 4） ========== -->
+    <!-- 通知权限：Android 13+ 天气提醒（flutter_local_notifications 必需） -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- 开机自启：设备重启后恢复每日天气提醒定时调度 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- 健康数据（步数）：Health Connect 读取今日步数（Android 9+ 健康平台） -->
+    <uses-permission android:name="android.permission.health.READ_STEPS"/>
+    <application
+        android:label="微旅途"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <!-- Specifies an Android theme to apply to this Activity as soon as
+                 the Android process has started. This theme is visible to the user
+                 while the Flutter UI initializes. After that, this theme continues
+                 to determine the Window background behind the Flutter UI. -->
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <!-- flutter_local_notifications：定时通知调度组件（天气提醒） -->
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
+            android:exported="false" />
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
+        <!-- Don't delete the meta-data below.
+             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+    <!-- 应用可见性查询（Queries）：
+         - Health Connect 应用探测（Android 健康数据读取前检查是否安装）
+         - ACTION_PROCESS_TEXT：Flutter 引擎文本处理插件所需 -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+    </queries>
+</manifest>

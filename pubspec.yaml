@@ -1,0 +1,94 @@
+name: micro_trip
+description: "微旅途 Flutter 版 — 旅游伴侣 APP（天气/城市/AI助手/备忘/收藏/轨迹/地图/拍照识物/步数）"
+publish_to: 'none'
+
+version: 3.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ==================== 状态管理 ====================
+  flutter_riverpod: ^2.6.1
+
+  # ==================== 路由 ====================
+  go_router: ^14.6.2
+
+  # ==================== 网络 ====================
+  dio: ^5.7.0
+
+  # ==================== 本地存储 ====================
+  shared_preferences: ^2.3.3
+
+  # ==================== 定位（轨迹录制 + 逆地理编码） ====================
+  geolocator: ^13.0.2
+
+  # ==================== Phase 2: 地图 / 轨迹 / 截图 / 拍照 ====================
+  flutter_map: ^7.0.2          # 地图渲染（开源，无需API Key）
+  latlong2: ^0.9.1             # 坐标计算（Haversine 距离）
+  http: ^1.2.0                 # 瓦片缓存 Provider 直接引用（flutter_map 传递依赖，显式声明消除 depend_on_referenced_packages）
+  screenshot: ^3.0.0           # Widget 截图（轨迹分享）
+  share_plus: ^10.0.0          # 系统分享面板
+  path_provider: ^2.1.3        # 临时文件路径（截图保存）
+  image_picker: ^1.1.2         # 拍照 / 相册选图
+
+  # ==================== Phase 3: 农历 / 万年历 ====================
+  lunar: ^1.7.8                # 农历/干支/节气/宜忌（6tail 官方 Dart 版，与小程序 lunar-lib.js 同源）
+
+  # ==================== Phase 4: 登录 / 健康 / 通知 ====================
+  crypto: ^3.0.6               # HMAC-SHA256（本地签发/校验 JWT 签名，纯 Dart 无原生依赖）
+  health: ^13.3.1              # 系统健康数据（iOS HealthKit / Android Health Connect），步数真实数据源
+  flutter_local_notifications: ^22.2.0 # 本地系统通知（天气提醒，对应小程序 weatherPush 升级）
+  timezone: ^0.11.1            # 通知定时调度时区支持（zonedSchedule 必需）
+  flutter_timezone: ^4.1.1     # 获取设备真实时区（保证每日天气提醒在本地时间触发）
+
+  # ==================== Phase 5: 后台轨迹录制 ====================
+  flutter_background_service: ^5.1.0 # 前台 Service 保活（Android），退后台 GPS 持续记录
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4 # 一键生成 Android/iOS 多尺寸应用图标
+  flutter_native_splash: ^2.4.0 # 原生品牌闪屏（消除冷启动白屏）
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+
+# ==================== Phase 4: 应用图标生成 ====================
+# 用法：dart run flutter_launcher_icons（在项目根目录执行）
+flutter_launcher_icons:
+  image_path: "assets/images/logo.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  min_sdk_android: 26
+  adaptive_icon_background: "#4FC3F7"
+  adaptive_icon_foreground: "assets/images/logo.png"
+
+# ==================== 原生品牌闪屏（消除冷启动白屏） ====================
+# 解决「启动白屏」：Android/iOS 原生层在 Flutter 引擎初始化到首帧之间
+# 默认显示白屏，本配置将其替换为品牌蓝底 + Logo，与 SplashPage 无缝衔接。
+# 用法：dart run flutter_native_splash:create（生成后勿手改产出文件）
+flutter_native_splash:
+  # 品牌背景色（与 launcher 图标底色、首页渐变一致）
+  color: "#4FC3F7"
+  color_dark: "#0288D1"
+  # 居中 Logo（复用 launcher 前景图）
+  image: "assets/images/logo.png"
+  image_dark: "assets/images/logo.png"
+  # Android 12+ 的 Splash API（icon 模式）同样套用 Logo
+  android_12:
+    image: "assets/images/logo.png"
+    color: "#4FC3F7"
+    color_dark: "#0288D1"
+  android: true
+  ios: true
+  web: false
+  fullscreen: true
