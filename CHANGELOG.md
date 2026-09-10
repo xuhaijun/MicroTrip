@@ -164,6 +164,14 @@
 - `cloudStatsProvider`：`watch(authProvider)` 联动 —— 登录/退出后自动重取，页面无需手动 invalidate。
 - 新增测试 34 例：`test/cloud_stats_test.dart`（23 例，解析容错 + 单位换算 + 时间展示）、
   `test/cloud_stats_card_test.dart`（11 例，五种状态 + 窄屏 320 溢出）。
+- 工程工具（提交卫生）：
+  - `scripts/install_git_filters.sh`：安装 + 自检 git clean filter（每台机器执行一次）。
+    自检含**精确输出比对**（避免「空输出被误判为通过」），并用「add 进索引后断言 0 处注入」
+    做决定性验证。
+  - `scripts/git-htmlclean.sh`：clean filter 包装脚本（找不到 python 时原样透传，绝不阻断 git；
+    可用 `MICROTRIP_PYTHON` 指定解释器）。
+  - `.gitattributes`：filter 声明 + `*.sh text eol=lf`（CRLF 会把 `\r` 带进 shell 变量，
+    导致路径解析失败 —— 本地已踩过同类坑）。
 
 ### Changed（优化）
 
@@ -191,6 +199,10 @@
 | `android/app/src/debug/res/xml/network_security_config_debug.xml` | 新增 |
 | `lib/services/auth_service.dart` | `ping()` 在正式包对 `http://` 给出明确提示 |
 | `scripts/shots.py` | 新增：模拟器走查截图工具 |
+| `.gitattributes` | 新增：`privacy_policy.html` clean filter + `*.sh` 锁 LF |
+| `scripts/git-htmlclean.sh` | 新增：clean filter 包装（无 python 时透传） |
+| `scripts/install_git_filters.sh` | 新增：安装 + 自检 filter |
+| `scripts/clean_html_injection.py` | 增加 `--stdin` 过滤模式（供 git filter 调用） |
 | `test/cloud_stats_test.dart`、`test/cloud_stats_card_test.dart` | 新增（34 例） |
 
 ### Fixed（修复）
@@ -199,6 +211,13 @@
   明文 HTTP，导致本地联调只能看到笼统的「网络错误」。已加 **debug 专用**网络安全配置。
 - **正式包填 `http://` 地址会静默失败**：`AuthService.ping()` 现在会区分「地址填错」与
   「被系统明文策略拦截」，直接给出可操作文案，避免用户在地址上反复试错。
+- **`privacy_policy.html` 被 IDE 预览持续回写注入属性**：提交后再复现一次，且实测
+  `git checkout` 恢复后 **2 秒内又会被重新注入 37 处** `data-page-node-id` —— 手工
+  「提交前记得跑一次脚本」已经防不住这类合规文件被污染。改为 **git clean filter 自动剥离**：
+  `.gitattributes` 声明 `privacy_policy.html filter=htmlclean`，配合
+  `scripts/git-htmlclean.sh` + `scripts/install_git_filters.sh`（每台机器执行一次）。
+  效果：工作区可以保持被注入的样子，`git status` 不再出现该幽灵改动，`git add` 写入索引的
+  内容 0 处注入。filter 找不到可用 python 时**原样透传**（退回旧行为），绝不阻断 git。
 
 ### 走查记录（模拟器实机，2026-09-10）
 

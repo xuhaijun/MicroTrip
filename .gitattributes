@@ -1,0 +1,20 @@
+# ============================================================
+# 属性驱动的 git filter（见 scripts/install_git_filters.sh）
+#
+# privacy_policy.html 被 IDE 的 HTML 预览打开后会被**持续回写** 37 个
+# data-page-node-id 属性（每次 git checkout 后 2 秒内又会出现）。
+# 这些属性不是我们写的代码，提交进去既污染 diff，也让「合规页面到底改了什么」
+# 这种复核变得不可读 —— 对隐私政策这类文件属于真实风险。
+#
+# 因此对该文件挂一个 clean filter：`git add` 时自动剥离注入属性。
+# 工作区可以保持被注入的样子，提交内容始终干净。
+#
+# 未安装 filter 时 git 会忽略未知的 filter 驱动（不会报错），
+# 行为退回「手工跑 scripts/clean_html_injection.py」，不会更糟。
+# ============================================================
+privacy_policy.html filter=htmlclean
+
+# 脚本必须保持 LF：core.autocrlf=true 会把检出内容转成 CRLF，
+# 而 shell 脚本里 `VAR=$(...)\r` 会把 \r 一起带进变量（路径末尾多个 \r → 找不到文件）。
+# 本地实测过一次类似故障（Windows python 路径解析），故统一锁 LF。
+*.sh text eol=lf
