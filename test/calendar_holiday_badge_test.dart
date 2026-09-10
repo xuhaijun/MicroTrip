@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:micro_trip/core/theme/app_theme.dart';
 import 'package:micro_trip/pages/calendar/calendar_page.dart';
+import 'package:micro_trip/pages/shared/widgets/arrangement_badge.dart';
 import 'package:micro_trip/services/lunar_service.dart';
 
 /// 万年历日期格「休 / 班」标签回归测试（2026-09-10）。
@@ -100,5 +101,26 @@ void main() {
     expect(find.text('休'), findsNWidgets(6),
         reason: '中秋节 3 天 + 下月补位的国庆节 3 天，共 6 个「休」');
     expect(find.text('班'), findsOneWidget, reason: '9 月仅 09-19 一天调休补班');
+  });
+
+  testWidgets('休/班标签位于日期格顶部（数字上方）', (tester) async {
+    await pumpCalendar(tester);
+
+    // 2026-09-10 需求：标签从底部移到日期格顶部 —— 徽章的纵坐标必须小于日期数字
+    final badge = find.descendant(
+      of: dayCell('25'),
+      matching: find.byType(ArrangementBadge),
+    );
+    expect(badge, findsOneWidget);
+
+    final badgeTop = tester.getTopLeft(badge).dy;
+    final numberTop = tester.getTopLeft(find.text('25')).dy;
+    expect(badgeTop, lessThan(numberTop),
+        reason: '「休」标签应显示在日期数字上方');
+
+    // 数字下方的农历标签应已让位（顶部标签 + 数字 + 无农历）
+    final cell = dayCell('25');
+    final lunar = LunarService.getLunarDayLabel(DateTime(2026, 9, 25));
+    expect(find.descendant(of: cell, matching: find.text(lunar)), findsNothing);
   });
 }

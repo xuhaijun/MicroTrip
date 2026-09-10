@@ -104,7 +104,15 @@ class AuthService {
   /// 接口基址（Phase 6）：所有业务接口统一走 `{serverUrl}/api/v1`。
   /// 后端 Controller 同时映射了历史裸路径，故此变更对旧版本后端亦安全
   /// （若确需回退到裸路径，把此 getter 改回 [serverUrl] 即可，无需改各 service）。
-  static String get apiBase => serverUrl.isEmpty ? '' : '$serverUrl/api/v1';
+  ///
+  /// 防呆：用户可能在设置页把规范路径整个填进来（`…/api/v1`），
+  /// 此时直接复用，避免拼出 `…/api/v1/api/v1` 导致所有请求 404。
+  static String get apiBase {
+    final base = serverUrl;
+    if (base.isEmpty) return '';
+    if (base.toLowerCase().endsWith('/api/v1')) return base;
+    return '$base/api/v1';
+  }
 
   // ==================== 连通性自检 ====================
 

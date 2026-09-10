@@ -147,6 +147,32 @@
 
 ---
 
+## [Unreleased] — 2026-09-10 休班标签置顶/行程页扩展 + 接口版本化（第五轮）
+
+### Changed（优化）
+
+- **休/班标签移到日期格顶部**：万年历日期格内「休/班」胶囊从底部移到顶部
+  （用户实测后指定位置），带标签格子农历照旧让位。
+- **行程页迷你日历同样显示休/班标签**：抽出共享组件
+  `lib/pages/shared/widgets/arrangement_badge.dart`（红=休、橙=班、非当月降透明度），
+  万年历与 `MiniCalendar` 共用；顺带修复迷你日历「调休补班的周末仍标红」的
+  不一致（补班日本质是工作日，不该标红）。
+- **接口版本化**：`AuthService.apiBase` 从裸路径切到 `{serverUrl}/api/v1`；
+  服务端同时暴露两套路径，旧版本后端亦兼容（回退只需改 apiBase 一处）。
+  所有业务请求（auth/trajectory/admin）与 `ping()` 健康检查路径一并核对。
+
+### Added（新增）
+
+- `test/mini_calendar_holiday_badge_test.dart`：迷你日历休/班标签测试。
+- `test/api_base_versioning_test.dart`：apiBase 版本化路径测试。
+- 万年历测试补「下月补位格同样显示休/班」用例（跨月假期覆盖）。
+
+### 验证
+
+`flutter analyze` 0 issue；`flutter test` 108 用例全绿（96 → 108）。
+
+---
+
 ## [Unreleased] — 2026-09-10 云端足迹统计接入「我的」页（第四轮）
 
 ### Added（新增）

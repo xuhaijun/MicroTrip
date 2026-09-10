@@ -6,11 +6,12 @@ import '../../core/theme/app_theme.dart';
 import '../../models/calendar_models.dart';
 import '../../services/holiday_data.dart';
 import '../../services/lunar_service.dart';
+import '../shared/widgets/arrangement_badge.dart';
 import '../shared/widgets/common_widgets.dart';
 
 /// ============================================================
 /// 万年历页（迁移自小程序 subpackages/tools/pages/calendar/calendar.js）
-/// - 6x7 月历网格：底部小标签（休/班 > 农历「节气 > 节日 > 初一月份 > 农历日」）
+/// - 6x7 月历网格：日期格顶部小标签（休/班 > 农历「节气 > 节日 > 初一月份 > 农历日」）
 /// - 「休 / 班」标签：法定放假红、调休补班橙，优先于农历日期显示
 /// - 今天渐变高亮、周末红色（补班日不再标红）
 /// - 左右滑动 / 卡片内按钮切换月份、「今天」一键回位
@@ -245,9 +246,9 @@ class _CalendarPageState extends State<CalendarPage> {
     final isSelected = day.dateStr == LunarService.fmt(_selected);
     final inMonth = day.isCurrentMonth;
     final holiday = day.holiday;
-    // 法定放假 / 调休补班：底部小标签改为「休 / 班」，优先级高于农历日期——
+    // 法定放假 / 调休补班：日期格**顶部**小标签显示「休 / 班」，优先级高于农历——
     // 农历日属于背景信息（下方老黄历卡片里还有完整版），
-    // 而「今天到底休不休」是用户看月历的第一诉求，必须一眼可辨。
+    // 而「今天到底休不休」是用户看月历的第一诉求，顶部比底部更先入眼。
     final isArrangement =
         holiday != null && (holiday.isHoliday || holiday.isWorkday);
 
@@ -264,14 +265,24 @@ class _CalendarPageState extends State<CalendarPage> {
               ? Border.all(color: AppColors.primary, width: 1.2)
               : null,
         ),
-        // 居中：公历日 + 底部小标签（休/班 或 农历）
-        // 顶部不再挂节日/休班角标：格宽仅 ~58px，角标会挤压日期数字，
-        // 且节日名已由下方农历标签与老黄历卡片承载，避免同一信息三处重复；
-        // 「休 / 班」则下沉到网格底部的标签位，不与日期数字抢空间。
+        // 垂直排布：休/班（顶部）→ 公历日数字 → 农历
+        // - 「休 / 班」置于数字上方（2026-09-10 需求），置于格内居中列顶部；
+        // - 有「休 / 班」时农历让位（同一格只放一个标签，休/班赢）；
+        // - 格宽仅 ~58px、格高 ~67px（aspect 0.78），顶部标签不会挤压数字，
+        //   节日名仍由老黄历卡片承载，避免同一信息三处重复。
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // 「休 / 班」小标签（顶部）
+              if (isArrangement) ...[
+                ArrangementBadge(
+                  label: holiday.label,
+                  isHoliday: holiday.isHoliday,
+                  inMonth: inMonth,
+                ),
+                const SizedBox(height: 2),
+              ],
               // 公历日数字（今天渐变圆底）
               Container(
                 width: 28,
@@ -300,14 +311,8 @@ class _CalendarPageState extends State<CalendarPage> {
                 ),
               ),
               const SizedBox(height: 2),
-              if (isArrangement)
-                _buildArrangementBadge(
-                  label: holiday.label,
-                  isHoliday: holiday.isHoliday,
-                  inMonth: inMonth,
-                )
-              else
-                // 农历小标签（节气/节日显示主色，其他灰色）
+              // 农历小标签（节气/节日显示主色，其他灰色）；有休/班时让位
+              if (!isArrangement)
                 Text(
                   day.lunarLabel,
                   maxLines: 1,
@@ -325,33 +330,6 @@ class _CalendarPageState extends State<CalendarPage> {
                 ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  /// 底部「休 / 班」小标签：红=法定放假，橙=调休补班；
-  /// 非本月补位格降透明度，避免抢走当月的视觉重心。
-  Widget _buildArrangementBadge({
-    required String label,
-    required bool isHoliday,
-    required bool inMonth,
-  }) {
-    final Color color = isHoliday ? AppColors.danger : AppColors.accent;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0.5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: inMonth ? 0.14 : 0.07),
-        borderRadius: BorderRadius.circular(3),
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        style: TextStyle(
-          fontSize: 9,
-          height: 1.1,
-          fontWeight: FontWeight.w700,
-          color: color.withValues(alpha: inMonth ? 1.0 : 0.5),
         ),
       ),
     );

@@ -10,7 +10,7 @@ import 'package:micro_trip/pages/shared/widgets/common_widgets.dart';
 /// 用固定 initialDate=2026-09-25 让断言与「今天」无关：该月数据里
 /// 09-19 为国庆调休（班）、09-25~27 为中秋节（休），正好覆盖两类标签。
 void main() {
-  testWidgets('月份切换位于日历卡片内，底部标签显示休/班', (tester) async {
+  testWidgets('月份切换位于日历卡片内，日期格顶部标签显示休/班', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: CalendarPage(initialDate: '2026-09-25'),
     ));
@@ -42,7 +42,7 @@ void main() {
 
     expect(find.text('2026年9月'), findsOneWidget, reason: '初始应展示 2026 年 9 月');
 
-    // ---------------- 3. 日期格底部标签：休/班 优先于农历 ----------------
+    // ---------------- 3. 日期格顶部标签：休/班 优先于农历 ----------------
     // 09-25~27 中秋（休）、09-19 国庆调休（班）
     // 注：优先级细节（农历是否让位、配色、补班日不标红）由
     // test/calendar_holiday_badge_test.dart 专项覆盖，此处只守「有显示」。
