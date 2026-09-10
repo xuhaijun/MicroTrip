@@ -68,7 +68,8 @@ class _DiscoverPageState extends ConsumerState<DiscoverPage>
                       onMore: () => context.push('/scenery'),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  // 标题与「为你精选」卡片间距调大：12 → 18
+                  const SizedBox(height: 18),
                   FadeSlideIn(
                     delay: 80,
                     child: _FeaturedScroller(city: city.name, mock: mock),
@@ -85,7 +86,8 @@ class _DiscoverPageState extends ConsumerState<DiscoverPage>
                     delay: 200,
                     child: SectionTitle(title: '分类'),
                   ),
-                  const SizedBox(height: 8),
+                  // 标题与分类卡片间距调小：8 → 4
+                  const SizedBox(height: 4),
                   FadeSlideIn(
                     delay: 240,
                     child: _CategoryGrid(),

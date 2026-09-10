@@ -135,6 +135,9 @@ class _HomePageState extends ConsumerState<HomePage>
                 }
               },
               subtitle: _dateSubtitle(),
+              // 天气卡内任意位置（温度/图标/湿度风/今明温度块/留白）均跳天气详情；
+              // 标题区（切城市）与刷新按钮层级更深，仍各自生效
+              onCardTap: () => context.push('/weather-detail'),
               actions: [
                 IconButton(
                   // 刷新中：显示转圈 + 禁用，给出明确的点击反馈
@@ -567,50 +570,63 @@ class _HomePageState extends ConsumerState<HomePage>
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary)),
-          // 标题与宫格间距：原 12 过大 → 6，让标题紧贴功能区
-          const SizedBox(height: 6),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              // 功能项间距调大：行距 10→14，列距 4→8，格子更疏朗
-              mainAxisSpacing: 14,
-              crossAxisSpacing: 8,
-              // 列距变大后每列略窄，aspectRatio 0.9→0.87 让格子更高，
-              // 抵消宽度收缩，保证 48px 图标 + 文字不溢出
-              childAspectRatio: 0.87,
-            ),
-            itemCount: entries.length,
-            itemBuilder: (_, i) {
-              final e = entries[i];
-              return FadeSlideIn(
-                delay: 360 + i * 40,
-                child: PressableScale(
-                  child: GestureDetector(
-                    onTap: e.$3,
-                    behavior: HitTestBehavior.opaque,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryLight.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                          child: Icon(e.$1, size: 24, color: AppColors.primary),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(e.$2,
-                            style: const TextStyle(
-                                fontSize: 12, color: AppColors.textSecondary)),
-                      ],
-                    ),
-                  ),
+          // 标题与宫格间距：一缩再缩（12 → 6 → 2），标题紧贴功能区
+          const SizedBox(height: 2),
+          // 图标与格子高度按可用宽度/字号自适应：
+          // 宽屏图标更大、窄屏自动收窄，且用 mainAxisExtent 直接给足内容高度，
+          // 避免固定 childAspectRatio 在窄屏或大字号下把内容压到溢出。
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final colWidth = (constraints.maxWidth - 8 * 3) / 4; // 扣掉 3 个列间距
+              final box = (colWidth * 0.84).clamp(46.0, 58.0); // 图标底容器
+              final iconSize = (colWidth * 0.47).clamp(26.0, 32.0); // 图标本体（放大）
+              final labelHeight =
+                  MediaQuery.textScalerOf(context).scale(12) * 1.5;
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  // 功能项间距调大：行距 10→14，列距 4→8，格子更疏朗
+                  mainAxisSpacing: 14,
+                  crossAxisSpacing: 8,
+                  // 高度 = 图标容器 + 间隙 + 文字行高（随字号缩放），恰好容纳内容
+                  mainAxisExtent: box + 6 + labelHeight,
                 ),
+                itemCount: entries.length,
+                itemBuilder: (_, i) {
+                  final e = entries[i];
+                  return FadeSlideIn(
+                    delay: 360 + i * 40,
+                    child: PressableScale(
+                      child: GestureDetector(
+                        onTap: e.$3,
+                        behavior: HitTestBehavior.opaque,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: box,
+                              height: box,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color:
+                                    AppColors.primaryLight.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(AppRadius.md),
+                              ),
+                              child:
+                                  Icon(e.$1, size: iconSize, color: AppColors.primary),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(e.$2,
+                                style: const TextStyle(
+                                    fontSize: 12, color: AppColors.textSecondary)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),

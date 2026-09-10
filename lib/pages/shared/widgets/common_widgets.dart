@@ -231,6 +231,7 @@ class GradientHeader extends StatelessWidget {
     this.actions,
     this.child,
     this.onTitleTap,
+    this.onCardTap,
   });
 
   final String title;
@@ -239,10 +240,17 @@ class GradientHeader extends StatelessWidget {
   final Widget? child;
   final VoidCallback? onTitleTap;
 
+  /// 整卡点击回调（如首页天气卡：卡内任意位置都跳天气详情）。
+  ///
+  /// 实现注意：用 [HitTestBehavior.opaque] 包住整卡，让标题/副标题之外的
+  /// 留白区域也能命中；标题区自带 GestureDetector（切城市）与 actions 里的
+  /// IconButton（刷新）层级更深，手势竞技场中优先胜出，不会被整卡点击吞掉。
+  final VoidCallback? onCardTap;
+
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
-    return Container(
+    final card = Container(
       width: double.infinity,
       padding: EdgeInsets.only(
         top: top + 16,
@@ -309,5 +317,14 @@ class GradientHeader extends StatelessWidget {
         ],
       ),
     );
+    // 整卡可点：opaque 让留白区也可命中（deferToChild 只在子节点上命中，
+    // 会出现「点卡片空白处没反应」的体验断点）
+    return onCardTap == null
+        ? card
+        : GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onCardTap,
+            child: card,
+          );
   }
 }

@@ -99,6 +99,54 @@
 
 ---
 
+## [Unreleased] — 2026-09-10 功能界面优化（第二轮）
+
+> 针对模拟器走查反馈的 4 处功能界面细节做定向优化。
+> 静态检查 `flutter analyze` → No issues；`flutter test` **54 用例全绿**（含新增 4 个回归用例），
+> 全路由溢出扫描（320~414 宽 × 10 尺寸）0 命中。
+
+### Changed（优化）
+
+- **首页 · 快捷功能**
+  - 快捷功能图标整体放大：图标底容器 48 → 自适应 46~58（按列宽），图标本体 24 → 26~32。
+  - 卡片内「快捷功能」标题与宫格间距：6 → 2，标题紧贴功能区。
+  - 宫格高度改用 `mainAxisExtent`（= 图标容器 + 间隙 + 文字行高，行高随系统字号缩放），
+    替掉固定 `childAspectRatio: 0.87` —— 窄屏 / 大字号下不再有被压扁溢出的风险。
+- **发现页**
+  - 「为你精选」标题与卡片间距调大：12 → 18。
+  - 「分类」标题与卡片间距调小：8 → 4。
+- **首页 · 天气卡片整卡可点**
+  - 卡片内任意位置（温度、天气图标、湿度/风、今明温度块、日期副标题、上下留白）统一跳天气详情。
+  - 修复根因：原先只有「天气 Row」被 `GestureDetector` 包住，且默认 `HitTestBehavior.deferToChild`
+    只在子节点命中 —— 点日期副标题或卡片留白毫无反应；现由 `GradientHeader.onCardTap`
+    以 `HitTestBehavior.opaque` 包住整卡，标题区（切城市）与刷新按钮层级更深、仍各自生效。
+- **万年历**
+  - 标题栏去掉「上个月 / 下个月」箭头（只留返回），切换功能下移到日历卡片顶部：
+    左箭头 · 「今天」· 右箭头一行，紧贴网格、单手可达，避免同一功能两处入口。
+  - 日期格顶部不再挂节日 / 休班角标（原 `maxWidth: 46`、`fontSize: 9` 的右上角胶囊）：
+    格宽仅约 58px，角标会挤压日期数字；节日名已由下方农历小标签
+    （节气 > 节日 > 初一月份 > 农历日）与老黄历卡片承载，不再三处重复。
+
+### Added（新增测试）
+
+- `test/home_weather_card_tap_test.dart`：天气卡底部留白 / 日期副标题点击跳天气详情；
+  并守护「点城市名仍走切城市、不被整卡点击吞掉」（负向验证：注释 `onCardTap` 后前两个用例失败）。
+- `test/calendar_month_nav_test.dart`：标题栏无月份箭头、卡片内有左右切换 + 「今天」；
+  切换可改变月份；日期格不再出现「休」「班」角标，同时「中秋节」仍由农历标签呈现
+  （固定 `initialDate=2026-09-25`，与「今天」无关）。
+
+### 涉及关键文件
+
+| 文件 | 改动 |
+|------|------|
+| `lib/pages/shared/widgets/common_widgets.dart` | `GradientHeader` 新增 `onCardTap`（opaque 整卡点击） |
+| `lib/pages/home/home_page.dart` | 快捷网格图标放大 + 标题间距 2 + `mainAxisExtent` 自适应；天气卡 `onCardTap` |
+| `lib/pages/discover/discover_page.dart` | 「为你精选」间距 12→18、「分类」间距 8→4 |
+| `lib/pages/calendar/calendar_page.dart` | 月份切换下移到日历卡片内；日期格去掉假日角标 |
+| `test/home_weather_card_tap_test.dart`、`test/calendar_month_nav_test.dart` | 新增回归用例（4 个） |
+
+---
+
 ## [Phase 5] — 云端同步与后台录制（历史）
 
 - 后端服务 MicroTripServer（Node.js + Express + SQLite）：JWT 认证 + 轨迹同步 API。

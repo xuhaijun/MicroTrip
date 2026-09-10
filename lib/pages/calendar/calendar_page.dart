@@ -100,21 +100,13 @@ class _CalendarPageState extends State<CalendarPage> {
         children: [
           GradientHeader(
             title: '$_year年$_month月',
+            // 月份切换已下移到日历卡片顶部（紧贴网格，单手可达），
+            // 标题栏只留返回，避免同一功能两处入口的视觉噪音
             actions: [
               IconButton(
                 tooltip: '返回',
                 onPressed: () => context.pop(),
                 icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-              ),
-              IconButton(
-                tooltip: '上个月',
-                onPressed: _prevMonth,
-                icon: const Icon(Icons.chevron_left, color: Colors.white),
-              ),
-              IconButton(
-                tooltip: '下个月',
-                onPressed: _nextMonth,
-                icon: const Icon(Icons.chevron_right, color: Colors.white),
               ),
             ],
           ),
@@ -159,19 +151,49 @@ class _CalendarPageState extends State<CalendarPage> {
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: _backToToday,
-                icon: const Icon(Icons.today, size: 16, color: AppColors.primary),
-                label: const Text('今天',
-                    style: TextStyle(fontSize: 13, color: AppColors.primary)),
-              ),
+            // 月份切换条：左右箭头 + 中间「今天」回位。
+            // 由标题栏下移到网格正上方，视线不必上下跳，单手也够得着。
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _monthNavButton(
+                  icon: Icons.chevron_left,
+                  tooltip: '上个月',
+                  onPressed: _prevMonth,
+                ),
+                TextButton.icon(
+                  onPressed: _backToToday,
+                  icon: const Icon(Icons.today, size: 16, color: AppColors.primary),
+                  label: const Text('今天',
+                      style: TextStyle(fontSize: 13, color: AppColors.primary)),
+                ),
+                _monthNavButton(
+                  icon: Icons.chevron_right,
+                  tooltip: '下个月',
+                  onPressed: _nextMonth,
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.sm),
             _buildWeekHeader(),
             _buildGrid(days),
           ],
+        ),
+      );
+
+  /// 月份切换按钮：主色浅底圆形，与网格同处一张卡内，形成明确的可点暗示
+  Widget _monthNavButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) =>
+      IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: Icon(icon, color: AppColors.primary),
+        style: IconButton.styleFrom(
+          backgroundColor: AppColors.primaryLight.withValues(alpha: 0.10),
+          minimumSize: const Size(40, 40),
         ),
       );
 
@@ -235,106 +257,58 @@ class _CalendarPageState extends State<CalendarPage> {
               ? Border.all(color: AppColors.primary, width: 1.2)
               : null,
         ),
-        child: Stack(
-          children: [
-            // 居中：公历日 + 农历小标签
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // 公历日数字（今天渐变圆底）
-                  Container(
-                    width: 28,
-                    height: 28,
-                    alignment: Alignment.center,
-                    decoration: day.isToday
-                        ? BoxDecoration(
-                            gradient: AppColors.primaryGradient,
-                            shape: BoxShape.circle,
-                          )
-                        : null,
-                    child: Text(
-                      '${day.day}',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: day.isToday
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        color: day.isToday
-                            ? Colors.white
-                            : !inMonth
-                                ? AppColors.textTertiary
-                                : day.isWeekend
-                                    ? AppColors.danger
-                                    : AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  // 农历小标签（节气/节日显示主色，其他灰色）
-                  Text(
-                    day.lunarLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 10,
-                      height: 1.0,
-                      color: !inMonth
-                          ? AppColors.textTertiary.withValues(alpha: 0.6)
-                          : (day.holiday != null ||
-                                  ['初一', '初二'].contains(day.lunarLabel))
-                              ? AppColors.primary
-                              : AppColors.textHint,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // 右上角角标：休/班小标签；普通节日 → 节日名胶囊（主色渐变 + emoji 前缀）
-            if (day.holiday != null && day.holiday!.label.isNotEmpty)
-              Positioned(
-                top: 2,
-                right: 2,
-                child: ConstrainedBox(
-                  // 限制最大宽度，避免长节日名（如「💝情人节」）在小格内溢出遮挡日期
-                  constraints: const BoxConstraints(maxWidth: 46),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
-                    decoration: BoxDecoration(
-                      // 普通节日：主色渐变胶囊；休/班：保持原浅底小角标
-                      gradient: day.holiday!.type == 'festival'
-                          ? AppColors.primaryGradient
-                          : null,
-                      color: day.holiday!.type == 'festival'
-                          ? null
-                          : (day.holiday!.isHoliday
-                              ? AppColors.danger.withValues(alpha: 0.10)
-                              : AppColors.textHint.withValues(alpha: 0.15)),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      // 节日名：emoji + 名称（如 🎉元旦、💝情人节）；休/班：原样
-                      day.holiday!.type == 'festival'
-                          ? '${day.holiday!.emoji}${day.holiday!.label}'
-                          : day.holiday!.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 9,
-                        height: 1.2,
-                        fontWeight: FontWeight.w600,
-                        color: day.holiday!.type == 'festival'
-                            ? Colors.white
-                            : (day.holiday!.isHoliday
+        // 居中：公历日 + 农历小标签
+        // 顶部不再挂节日/休班角标：格宽仅 ~58px，角标会挤压日期数字，
+        // 且节日名已由下方农历标签与老黄历卡片承载，避免同一信息三处重复。
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 公历日数字（今天渐变圆底）
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: day.isToday
+                    ? BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        shape: BoxShape.circle,
+                      )
+                    : null,
+                child: Text(
+                  '${day.day}',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: day.isToday ? FontWeight.w700 : FontWeight.w500,
+                    color: day.isToday
+                        ? Colors.white
+                        : !inMonth
+                            ? AppColors.textTertiary
+                            : day.isWeekend
                                 ? AppColors.danger
-                                : AppColors.textSecondary),
-                      ),
-                    ),
+                                : AppColors.textPrimary,
                   ),
                 ),
               ),
-          ],
+              const SizedBox(height: 2),
+              // 农历小标签（节气/节日显示主色，其他灰色）
+              Text(
+                day.lunarLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10,
+                  height: 1.0,
+                  color: !inMonth
+                      ? AppColors.textTertiary.withValues(alpha: 0.6)
+                      : (day.holiday != null ||
+                              ['初一', '初二'].contains(day.lunarLabel))
+                          ? AppColors.primary
+                          : AppColors.textHint,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
