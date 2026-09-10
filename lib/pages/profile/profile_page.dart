@@ -8,12 +8,15 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/app_providers.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/weather_push_service.dart';
+import '../shared/widgets/cloud_stats_card.dart';
 import '../shared/widgets/common_widgets.dart';
 
 /// ============================================================
 /// 我的页（对应小程序 pages/profile）
 /// 现代重设计：统一渐变头部（用户身份 + 实时统计：城市 / 轨迹 / 备忘 / 收藏）
-/// + 功能入口（收藏 / 我的轨迹 / 我的备忘 / 天气提醒 / 自动定位 / 设置 / 关于）+ 退出登录 + 版本页脚
+/// + 云端足迹卡片（服务端 SQL 聚合，未登录自动隐藏）
+/// + 功能入口（收藏 / 我的轨迹 / 我的备忘 / 天气提醒 / 自动定位 / 设置 / 关于）
+/// + 退出登录 + 版本页脚
 /// ============================================================
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -156,6 +159,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Column(
                 children: [
+                  // ---------------- 云端足迹统计（服务端 SQL 聚合，未登录自动隐藏） ----------------
+                  // 放在功能入口之前：它是"结果数据"，比"入口列表"更值得先看到；
+                  // localRecordCount 用于解释"云端与本地条数为何不一致"
+                  CloudStatsCard(localRecordCount: records.length),
+                  const SizedBox(height: 12),
                   // ---------------- 功能入口 ----------------
                   FadeSlideIn(
                     child: AppCard(

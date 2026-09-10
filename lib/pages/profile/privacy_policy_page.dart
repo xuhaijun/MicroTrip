@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/animations/anim_effects.dart';
+import '../../core/config/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../shared/widgets/common_widgets.dart';
 
 /// ============================================================
 /// 隐私政策页（P1：上架硬性要求）
 /// 较完整的示例正文，贴近本 App 实际功能；
-/// 正式上架前请将「联系邮箱」替换为运营方真实信息，
+/// 联系邮箱统一取 AppConfig.contactEmail（单点维护），
 /// 并视需要将本文托管到可访问 URL 填入各商店后台。
 /// ============================================================
 class PrivacyPolicyPage extends StatefulWidget {
@@ -89,7 +90,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
     ),
     (
       '九、联系我们',
-      '如对本隐私政策有疑问，可通过邮箱 privacy@microtrip.example 与我们联系，'
+      '如对本隐私政策有疑问，可通过邮箱 ${AppConfig.contactEmail} 与我们联系，'
       '我们将在 15 个工作日内回复。'
     ),
   ];
@@ -134,7 +135,8 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
                     const SizedBox(height: 16),
                   ],
                   const Text(
-                    '本政策适用于「微旅途」全部功能。如对内容有疑问，可联系 privacy@microtrip.example。',
+                    '本政策适用于「微旅途」全部功能。如对内容有疑问，可联系 '
+                    '${AppConfig.contactEmail}。',
                     style: TextStyle(
                         fontSize: 12, color: AppColors.textHint, height: 1.6),
                   ),

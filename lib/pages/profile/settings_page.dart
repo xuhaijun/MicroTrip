@@ -164,6 +164,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pop(); // 关闭进度框
         setState(() {}); // 刷新上次同步时间
+        // 云端条数/里程已变化，「我的」页的云端足迹卡片需重新拉取统计
+        ref.invalidate(cloudStatsProvider);
         _showSnack(result.total == 0
             ? '暂无本地轨迹可同步'
             : result.failed == 0
@@ -371,7 +373,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   child: Column(
                     children: [
                       _field(_authServer, '后端服务地址',
-                          '留空 = 本地演示模式（离线可用）\n填写 https://… 后登录/注册走真实接口'),
+                          '留空 = 本地演示模式（离线可用）\n填写 https://… 后登录/注册走真实接口\n'
+                          '（http:// 仅 debug 包可用，正式包会被系统禁止明文传输）'),
                       const SizedBox(height: 4),
                       Align(
                         alignment: Alignment.centerLeft,

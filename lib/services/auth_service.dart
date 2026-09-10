@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 
 import '../core/http/http_client.dart';
 import '../core/storage/app_storage.dart';
@@ -131,6 +132,16 @@ class AuthService {
     if (!base.startsWith('http://') && !base.startsWith('https://')) {
       return const ServerPingResult(
           ok: false, message: '地址需以 http:// 或 https:// 开头');
+    }
+    // 明文 HTTP 在 release 包必然失败，且失败表现是笼统的「网络错误」，
+    // 用户根本想不到是系统明文策略拦截（Android 9+ 默认禁止、iOS 默认受 ATS 限制）。
+    // 这里提前拦下并说清原因，避免用户在地址上反复试错。
+    // debug 包已在 android/app/src/debug 放开明文，可正常连本机/局域网后端。
+    if (base.startsWith('http://') && !kDebugMode) {
+      return const ServerPingResult(
+          ok: false,
+          message: '正式包禁止明文 HTTP（Android 9+ / iOS ATS 默认拦截），'
+              '请改用 https:// 地址；本地联调请用 debug 包');
     }
 
     final started = DateTime.now();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../shared/widgets/common_widgets.dart';
 
@@ -8,7 +9,7 @@ import '../shared/widgets/common_widgets.dart';
 /// 用户协议页（P1：上架硬性要求，与《隐私政策》配套）
 /// 覆盖服务说明 / 账号规则 / 用户行为规范 / 免责声明 / 协议变更等。
 /// 首次启动的《用户协议 & 隐私政策》弹框即引用本页与隐私政策页。
-/// 正式上架前请将「联系邮箱」替换为运营方真实信息。
+/// 联系邮箱统一取 AppConfig.contactEmail（单点维护）。
 /// ============================================================
 class UserAgreementPage extends StatefulWidget {
   const UserAgreementPage({super.key});
@@ -91,7 +92,7 @@ class _UserAgreementPageState extends State<UserAgreementPage> {
     ),
     (
       '十一、联系我们',
-      '如对本协议有任何疑问或建议，可通过邮箱 privacy@microtrip.example 与我们联系。'
+      '如对本协议有任何疑问或建议，可通过邮箱 ${AppConfig.contactEmail} 与我们联系。'
     ),
   ];
 

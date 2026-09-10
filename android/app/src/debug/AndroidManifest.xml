@@ -4,4 +4,9 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- debug 专用：允许明文 HTTP，用于连接本地 / 局域网后端
+         （详见 res/xml/network_security_config_debug.xml）。
+         release 包不合并本文件，线上仍强制 HTTPS。 -->
+    <application android:networkSecurityConfig="@xml/network_security_config_debug" />
 </manifest>

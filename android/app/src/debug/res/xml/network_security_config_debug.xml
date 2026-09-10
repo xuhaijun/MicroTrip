@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  debug 专用网络安全配置（仅对 debug 构建生效，不会打进 release 包）。
+
+  为什么需要它：
+  Android 9（API 28）起，targetSdk ≥ 28 的应用默认**禁止明文 HTTP**。
+  本项目 targetSdk 跟随 Flutter 默认值（≥ 34），主清单里没有开启明文许可，
+  因此 debug 包无法访问 http:// 后端（本机 10.0.2.2:3000 / 局域网 IP 均被拦），
+  表现为「连接超时 / 网络错误」，且错误信息不会提示是明文策略拦截 —— 很难排查。
+
+  为本地开发（连 docker-compose 起的后端、真机连开发机局域网地址）放行明文，
+  同时**保持 release 仍只允许 HTTPS**：release 包不包含本配置，
+  清单里也没有 usesCleartextTraffic，故线上依旧强制加密传输。
+-->
+<network-security-config>
+    <!-- debug 允许明文：开发机地址不固定（10.0.2.2 / 192.168.x.x），故不逐条列举 -->
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

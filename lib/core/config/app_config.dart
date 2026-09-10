@@ -52,6 +52,10 @@ class AppConfig {
   // ==================== 应用信息 ====================
   static const String appName = '微旅途';
 
+  /// 运营联系邮箱：隐私政策 / 用户协议 / 各应用商店备案信息统一引用此处，
+  /// 换邮箱只需改这一行（发版前务必确认与商店后台填写的一致）。
+  static const String contactEmail = 'xuhaijun5382@163.com';
+
   /// 应用版本号：与 pubspec.yaml 的 version 保持一致（发版时两处同步改）。
   static const String appVersion = '3.0.0';
 

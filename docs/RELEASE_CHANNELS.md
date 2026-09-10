@@ -81,7 +81,8 @@ bash scripts/build_channels.sh aab
 3. 获得 `https://ecloudy.gitee.io/micro-trip/privacy_policy.html` 填入各商店后台
 
 > 亦可发布到 GitHub Pages、对象存储（COS/OSS）或自有服务器。
-> 注意：把邮箱 `privacy@microtrip.example` 替换为真实运营邮箱后再发布。
+> 联系邮箱已统一为 `xuhaijun5382@163.com`（Flutter 侧单点定义在 `AppConfig.contactEmail`，
+> 换邮箱只需改这一处 + 本 HTML）。
 
 ## 5. iOS 发布（本机 Windows 无法构建，需在 Mac 完成）
 

@@ -147,6 +147,101 @@
 
 ---
 
+## [Unreleased] — 2026-09-10 云端足迹统计接入「我的」页（第四轮）
+
+### Added（新增）
+
+- `lib/models/cloud_stats.dart`：`CloudStats` 模型 —— 对接服务端 `GET /trajectory/stats`。
+  - 单位严格沿用服务端契约（距离**米**、时长**秒**、时间戳**毫秒**），换算全部收敛到 `xxxText`，
+    避免「数字看着都对、单位差 1000 倍」这类难以察觉的错误。
+  - 解析**永不抛异常**：字段缺失/类型异常一律退化为 0 —— 统计属于锦上添花的信息，
+    不能因为某个字段缺失就让「我的」页整块报错。
+- `lib/pages/shared/widgets/cloud_stats_card.dart`：「云端足迹」卡片，五种状态都有明确呈现：
+  加载（骨架占位）/ 未登录（整卡隐藏）/ 出错（可读文案 + 重试）/ 无数据（引导去同步）/ 正常。
+- `SyncService.fetchStats()`：拉取汇总统计。服务端在 SQL 侧一次聚合后只回传一行，
+  **调用代价与轨迹条数无关** —— 这是引入该接口的核心理由（轨迹会随使用时间累积，
+  本地求和迟早拖慢页面）。
+- `cloudStatsProvider`：`watch(authProvider)` 联动 —— 登录/退出后自动重取，页面无需手动 invalidate。
+- 新增测试 34 例：`test/cloud_stats_test.dart`（23 例，解析容错 + 单位换算 + 时间展示）、
+  `test/cloud_stats_card_test.dart`（11 例，五种状态 + 窄屏 320 溢出）。
+
+### Changed（优化）
+
+- 「我的」页在功能入口之前插入云端足迹卡片；`localRecordCount` 传入本地条数，
+  云端与本地不一致时给出**原因解释**（「比本地多 N 条（含其他设备）」/「少 N 条（未同步）」），
+  避免用户误以为数据丢失。
+- 同步完成（`settings_page.dart`）、删除云端记录（`cloud_trajectory_page.dart`、
+  `trajectory_detail_page.dart::fromCloud`）后 `invalidate(cloudStatsProvider)` ——
+  统计由服务端聚合、客户端无法本地推算，不失效会让用户看到改动前的数字。
+- `cloud_trajectory_page.dart` 由 `StatefulWidget` 改为 `ConsumerStatefulWidget`（仅为拿到 `ref`）。
+
+### 涉及关键文件
+
+| 文件 | 改动 |
+|------|------|
+| `lib/models/cloud_stats.dart` | 新增：统计模型 + 格式化 + 解析容错 |
+| `lib/pages/shared/widgets/cloud_stats_card.dart` | 新增：五态统计卡片 |
+| `lib/services/sync_service.dart` | 新增 `fetchStats()` |
+| `lib/providers/app_providers.dart` | 新增 `cloudStatsProvider`（联动登录态） |
+| `lib/pages/profile/profile_page.dart` | 接入卡片 |
+| `lib/pages/profile/settings_page.dart` | 同步后刷新统计；地址提示补充明文说明 |
+| `lib/pages/trajectory/cloud_trajectory_page.dart` | 转 Consumer + 删除后刷新统计 |
+| `lib/pages/trajectory/trajectory_detail_page.dart` | 云端删除后刷新统计 |
+| `android/app/src/debug/AndroidManifest.xml` | 新增 debug 明文许可（release 不受影响） |
+| `android/app/src/debug/res/xml/network_security_config_debug.xml` | 新增 |
+| `lib/services/auth_service.dart` | `ping()` 在正式包对 `http://` 给出明确提示 |
+| `scripts/shots.py` | 新增：模拟器走查截图工具 |
+| `test/cloud_stats_test.dart`、`test/cloud_stats_card_test.dart` | 新增（34 例） |
+
+### Fixed（修复）
+
+- **debug 包无法访问 `http://` 后端**：主清单未放开明文，而 targetSdk ≥ 28 时 Android 默认禁止
+  明文 HTTP，导致本地联调只能看到笼统的「网络错误」。已加 **debug 专用**网络安全配置。
+- **正式包填 `http://` 地址会静默失败**：`AuthService.ping()` 现在会区分「地址填错」与
+  「被系统明文策略拦截」，直接给出可操作文案，避免用户在地址上反复试错。
+
+### 走查记录（模拟器实机，2026-09-10）
+
+`build/audit_shots/` 新增 4 张：`26_calendar_holiday_badges`（9 月休/班）、
+`27_calendar_oct_holiday`（10 月国庆连休 + 补班）、`28_profile_logged_out`（未登录卡片隐藏）、
+`29_profile_cloud_stats`（云端足迹真实数据）。逐像素核对了「补班日数字不标红」与
+「假期周末数字标红 + 红休」两个易看走眼的细节。详见 `docs/UI_AUDIT_2026-09-10.md` 第七章。
+
+---
+
+## [Unreleased] — 2026-09-10 真实联系邮箱 + 万年历休班标签（第三轮）
+
+### Added（新增）
+
+- `AppConfig.contactEmail`：联系邮箱单点常量（隐私政策页 / 用户协议页 / 上架文档统一引用）。
+- `test/calendar_holiday_badge_test.dart`（5 例）：休/班标签优先级、配色、补班日数字配色、跨月补位格。
+- `test/config_contact_email_test.dart`（3 例）：邮箱为真实可投递地址、两协议页正文确实引用该常量、无占位邮箱残留。
+
+### Changed（优化）
+
+- **万年历日期格底部标签**：法定放假 / 调休补班时显示「休 / 班」胶囊，**优先级高于农历日期**
+  （原第二轮把角标整体移除，本轮按要求回到「底部小标签」位，不再挤压日期数字）。
+  - `休` → 红色胶囊；`班` → 橙色胶囊；非本月补位格降透明度。
+  - 一致性修正：**调休补班的周末，日期数字不再标红**（补班是工作日，标红自相矛盾）。
+
+### Fixed（修复）
+
+- 「隐私政策」「用户协议」正文与页脚的联系邮箱由占位地址 `privacy@microtrip.example`
+  替换为 `xuhaijun5382@163.com`（含根目录 `privacy_policy.html`），满足渠道审核对「可联系到运营方」的要求。
+
+### 涉及关键文件
+
+| 文件 | 改动 |
+|------|------|
+| `lib/core/config/app_config.dart` | 新增 `contactEmail` 常量 |
+| `lib/pages/profile/privacy_policy_page.dart` | 两处邮箱改为引用常量 |
+| `lib/pages/profile/user_agreement_page.dart` | 邮箱改为引用常量 |
+| `lib/pages/calendar/calendar_page.dart` | 日期格底部新增 `_buildArrangementBadge`；补班日数字配色修正 |
+| `privacy_policy.html` | 托管版隐私政策邮箱同步替换 |
+| `docs/RELEASE_CHANNELS.md` | 上架清单邮箱项标记完成 |
+
+---
+
 ## [Phase 5] — 云端同步与后台录制（历史）
 
 - 后端服务 MicroTripServer（Node.js + Express + SQLite）：JWT 认证 + 轨迹同步 API。

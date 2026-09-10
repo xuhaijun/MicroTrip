@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../core/http/http_client.dart';
 import '../core/storage/app_storage.dart';
+import '../models/cloud_stats.dart';
 import '../models/cloud_trajectory.dart';
 import '../models/trajectory.dart';
 import 'auth_service.dart';
@@ -13,6 +14,7 @@ import 'trajectory_repository.dart';
 /// 与 MicroTripServer（Node.js + Express + SQLite）对接：
 ///   POST   {apiBase}/trajectory/sync   { trajectory } → { ok, id }    按 id 幂等 upsert
 ///   GET    {apiBase}/trajectory/list   分页摘要（不含 GPS 点）→ { list, page, pageSize, total, hasMore }
+///   GET    {apiBase}/trajectory/stats  汇总统计 → { count, totalDistance, totalDuration, ... }
 ///   GET    {apiBase}/trajectory/:id    完整详情 → { trajectory }
 ///   DELETE {apiBase}/trajectory/:id    删除云端记录 → { ok: true }
 ///
@@ -20,10 +22,11 @@ import 'trajectory_repository.dart';
 /// 优雅降级：未配置后端地址 / 未登录时，isConfigured = false，
 /// UI 层据此隐藏同步入口或给出引导提示，App 本体功能不受影响。
 ///
-/// 对外 API（供设置页 / 云端历史页使用）：
+/// 对外 API（供设置页 / 云端历史页 / 我的页使用）：
 ///  - isConfigured / lastSyncAtText       同步状态查询
 ///  - syncAll({onProgress})               手动全量同步
 ///  - fetchList({page, pageSize})         云端历史列表（分页）
+///  - fetchStats()                        云端汇总统计（SQL 侧聚合）
 ///  - fetchDetail(id)                     云端完整详情 → TrajectoryRecord
 ///  - deleteRemote(id)                    删除云端记录
 /// ============================================================
@@ -134,6 +137,29 @@ class SyncService {
       total: (body['total'] as num?)?.toInt() ?? 0,
       hasMore: body['hasMore'] == true,
     );
+  }
+
+  // ==================== 云端汇总统计 ====================
+
+  /// 拉取云端轨迹汇总统计（轨迹数 / 累计里程时长 / 爬升下降 / 采样点数）。
+  ///
+  /// 服务端在 SQL 侧一次聚合后只回传一行，因此**调用代价与轨迹条数无关**；
+  /// 「我的」页据此展示云端足迹，无需把全部轨迹拉到本地求和。
+  ///
+  /// 永不返回 null：无数据时返回 [CloudStats.empty]，UI 无需处理 null 分支。
+  static Future<CloudStats> fetchStats() async {
+    if (!isConfigured) {
+      throw ServiceException('未登录或未配置后端地址');
+    }
+    final data = await HttpClient.get(
+      '${AuthService.apiBase}/trajectory/stats',
+      needAuth: true,
+    );
+    final body = _unwrap(data);
+    if (body is! Map) {
+      throw ServiceException('云端返回格式错误（stats 非对象）');
+    }
+    return CloudStats.fromMap(Map<String, dynamic>.from(body));
   }
 
   // ==================== 云端详情 ====================

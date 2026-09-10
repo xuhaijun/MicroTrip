@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/cloud_trajectory.dart';
+import '../../providers/app_providers.dart';
 import '../../services/auth_service.dart';
 import '../../services/sync_service.dart';
 import '../shared/widgets/common_widgets.dart';
@@ -21,15 +23,21 @@ import '../shared/widgets/common_widgets.dart';
 ///  - 长按卡片 → 删除云端记录
 ///  - 下拉刷新 / 加载更多
 ///  - 未登录或未配置后端地址 → 引导提示（优雅降级）
+///
+/// 说明：本页用 ConsumerStatefulWidget 而非普通 StatefulWidget，
+/// 只为在删除云端记录后 invalidate `cloudStatsProvider` ——
+/// 「我的」页的云端足迹卡片是缓存型 FutureProvider，
+/// 不主动失效会让用户回到「我的」页仍看到删除前的条数。
 /// ============================================================
-class CloudTrajectoryPage extends StatefulWidget {
+class CloudTrajectoryPage extends ConsumerStatefulWidget {
   const CloudTrajectoryPage({super.key});
 
   @override
-  State<CloudTrajectoryPage> createState() => _CloudTrajectoryPageState();
+  ConsumerState<CloudTrajectoryPage> createState() =>
+      _CloudTrajectoryPageState();
 }
 
-class _CloudTrajectoryPageState extends State<CloudTrajectoryPage> {
+class _CloudTrajectoryPageState extends ConsumerState<CloudTrajectoryPage> {
   final List<CloudTrajectory> _items = [];
   int _page = 1;
   int _total = 0;
@@ -136,6 +144,8 @@ class _CloudTrajectoryPageState extends State<CloudTrajectoryPage> {
       await SyncService.deleteRemote(item.id);
       if (mounted) {
         setState(() => _items.removeWhere((e) => e.id == item.id));
+        // 契约：统计由服务端聚合，客户端无法本地推算，必须重拉
+        ref.invalidate(cloudStatsProvider);
         _showSnack('已删除云端轨迹');
       }
     } catch (e) {

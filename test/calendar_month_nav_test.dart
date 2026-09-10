@@ -5,13 +5,12 @@ import 'package:micro_trip/pages/shared/widgets/common_widgets.dart';
 
 /// 回归（2026-09-10 界面优化）：
 /// 1) 月份切换从标题栏下移到日历卡片顶部（贴近网格），标题栏只留返回；
-/// 2) 日期格顶部不再挂节日/休班角标 —— 农历标签（节气 > 节日 > 初一月份 > 农历日）
-///    与下方老黄历卡片已承载同一信息，小格里重复显示只会挤压日期数字。
+/// 2) 日期格底部小标签：法定放假 / 调休补班显示「休 / 班」且优先于农历日期。
 ///
 /// 用固定 initialDate=2026-09-25 让断言与「今天」无关：该月数据里
-/// 09-19 为国庆调休（班）、09-25~27 为中秋节（休），正好覆盖两类角标。
+/// 09-19 为国庆调休（班）、09-25~27 为中秋节（休），正好覆盖两类标签。
 void main() {
-  testWidgets('月份切换位于日历卡片内，日期格不再显示假日角标', (tester) async {
+  testWidgets('月份切换位于日历卡片内，底部标签显示休/班', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: CalendarPage(initialDate: '2026-09-25'),
     ));
@@ -43,14 +42,14 @@ void main() {
 
     expect(find.text('2026年9月'), findsOneWidget, reason: '初始应展示 2026 年 9 月');
 
-    // ---------------- 3. 日期格不再有假日角标 ----------------
-    expect(find.text('休'), findsNothing,
-        reason: '中秋节假期（09-25~27）不应再显示「休」角标');
-    expect(find.text('班'), findsNothing,
-        reason: '国庆调休（09-19）不应再显示「班」角标');
-    // 信息并未丢失：节日名仍由农历小标签承载
-    expect(find.text('中秋节'), findsWidgets,
-        reason: '农历标签仍应显示节日名（下面卡片之外的第二处呈现）');
+    // ---------------- 3. 日期格底部标签：休/班 优先于农历 ----------------
+    // 09-25~27 中秋（休）、09-19 国庆调休（班）
+    // 注：优先级细节（农历是否让位、配色、补班日不标红）由
+    // test/calendar_holiday_badge_test.dart 专项覆盖，此处只守「有显示」。
+    expect(find.text('休'), findsWidgets,
+        reason: '中秋节假期（09-25~27）应在底部显示「休」');
+    expect(find.text('班'), findsWidgets,
+        reason: '国庆调休（09-19）应在底部显示「班」');
 
     // ---------------- 4. 卡片内切换月份可用 ----------------
     await tester.tap(prevBtn);

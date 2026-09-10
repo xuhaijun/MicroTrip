@@ -529,6 +529,8 @@ class _TrajectoryDetailPageState extends ConsumerState<TrajectoryDetailPage> {
       // 云端模式：调用 SyncService 删除云端记录
       try {
         await SyncService.deleteRemote(widget.trajectoryId);
+        // 云端条数已变，「我的」页的云端足迹卡片需重拉服务端聚合
+        ref.invalidate(cloudStatsProvider);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('已删除云端轨迹')));

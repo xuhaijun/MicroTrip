@@ -6,6 +6,7 @@ import '../core/config/data_config.dart';
 import '../core/storage/app_storage.dart';
 import '../models/ai_message.dart';
 import '../models/city_info.dart';
+import '../models/cloud_stats.dart';
 import '../models/food_item.dart';
 import '../models/memo_item.dart';
 import '../models/scenery_item.dart';
@@ -20,12 +21,15 @@ import '../services/location_service.dart';
 import '../services/memo_repository.dart';
 import '../services/scenery_service.dart';
 import '../services/step_service.dart';
+import '../services/sync_service.dart';
 import '../services/trajectory_repository.dart';
 import '../services/trajectory_service.dart';
 import '../services/weather_service.dart';
 import '../models/favorite_item.dart';
 import '../services/favorite_repository.dart';
 import 'package:geolocator/geolocator.dart';
+
+import 'auth_provider.dart';
 
 /// ============================================================
 /// Riverpod 状态层
@@ -368,6 +372,26 @@ final trajectoryDetailProvider =
     FutureProvider.family<TrajectoryRecord?, String>(
   (ref, id) => TrajectoryRepository.getById(id),
 );
+
+// ==================== 云端足迹统计 ====================
+
+/// 云端轨迹汇总统计（「我的」页「云端足迹」卡片）。
+///
+/// 几个刻意的设计选择：
+///  - **watch authProvider**：登录/退出后自动重取，不需要页面手动 invalidate。
+///    退出登录时 [SyncService.isConfigured] 变 false，直接返回空统计而非抛错，
+///    避免"退出登录瞬间卡片闪一下红色错误"。
+///  - **不自动重试**：统计失败不阻塞页面其他部分，由用户在卡片上手动点重试。
+///  - 返回 [CloudStats.empty] 而非抛错来表达"没有数据"，
+///    只有真正的网络/鉴权失败才走 error 分支。
+final cloudStatsProvider = FutureProvider<CloudStats>((ref) async {
+  // 依赖登录态：token 变化（登录/退出/切换账号）后自动重新拉取
+  final auth = ref.watch(authProvider);
+  if (!auth.isLoggedIn || !SyncService.isConfigured) {
+    return CloudStats.empty;
+  }
+  return SyncService.fetchStats();
+});
 
 // ==================== 步数 ====================
 
