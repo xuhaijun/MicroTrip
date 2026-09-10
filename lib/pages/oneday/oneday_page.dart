@@ -190,8 +190,8 @@ class _OneDayPageState extends ConsumerState<OneDayPage> {
                         children: [
                           Row(
                             children: [
-                              const Text('🤖',
-                                  style: TextStyle(fontSize: 18)),
+                              const Icon(Icons.smart_toy_outlined,
+                                  size: 18, color: AppColors.primary),
                               const SizedBox(width: AppSpacing.sm),
                               const Expanded(
                                 child: Text('AI 优化建议',

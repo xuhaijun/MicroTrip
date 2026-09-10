@@ -283,8 +283,8 @@ class _FeaturedCard extends StatelessWidget {
           gradient: AppColors.primaryGradientWith(0.18),
         ),
         alignment: Alignment.center,
-        child: Text(item.type == 'food' ? '🍜' : '🏞️',
-            style: const TextStyle(fontSize: 32)),
+        child: Icon(item.type == 'food' ? Icons.restaurant : Icons.landscape,
+            size: 30, color: AppColors.primary),
       );
 }
 
@@ -354,7 +354,7 @@ class _SmartRecommendState extends ConsumerState<_SmartRecommend> {
           // 标题行
           Row(
             children: [
-              const Text('🤖', style: TextStyle(fontSize: 24)),
+              const Icon(Icons.smart_toy_outlined, size: 24, color: Colors.white),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -420,9 +420,9 @@ class _SmartRecommendState extends ConsumerState<_SmartRecommend> {
           // 标签快捷入口
           Row(
             children: [
-              _Chip('🏞️ 必去景点', () => context.push('/scenery')),
+              _Chip(Icons.landscape, '必去景点', () => context.push('/scenery')),
               const SizedBox(width: 8),
-              _Chip('🍜 必吃美食', () => context.push('/food')),
+              _Chip(Icons.restaurant, '必吃美食', () => context.push('/food')),
             ],
           ),
         ],
@@ -433,7 +433,8 @@ class _SmartRecommendState extends ConsumerState<_SmartRecommend> {
 
 /// 标签（白色描边，点击跳转）
 class _Chip extends StatelessWidget {
-  const _Chip(this.label, this.onTap);
+  const _Chip(this.icon, this.label, this.onTap);
+  final IconData icon;
   final String label;
   final VoidCallback onTap;
 
@@ -446,8 +447,15 @@ class _Chip extends StatelessWidget {
             border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
             borderRadius: BorderRadius.circular(AppRadius.round),
           ),
-          child: Text(label,
-              style: const TextStyle(fontSize: 12, color: Colors.white)),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 13, color: Colors.white),
+              const SizedBox(width: 4),
+              Text(label,
+                  style: const TextStyle(fontSize: 12, color: Colors.white)),
+            ],
+          ),
         ),
       );
 }

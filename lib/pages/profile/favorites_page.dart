@@ -123,9 +123,12 @@ class _FavoritesPageState extends State<FavoritesPage>
                     gradient: AppColors.primaryGradientWith(0.12),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  child: Text(
-                    type == FavoriteType.food ? '🍜' : '🏞️',
-                    style: const TextStyle(fontSize: 24),
+                  child: Icon(
+                    type == FavoriteType.food
+                        ? Icons.restaurant
+                        : Icons.landscape,
+                    size: 24,
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(width: 12),

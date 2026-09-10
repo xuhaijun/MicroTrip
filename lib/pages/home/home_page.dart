@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/animations/anim_effects.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/ui/weather_icons.dart';
 import '../../models/city_info.dart';
 import '../../models/weather.dart';
 import '../../providers/app_providers.dart';
@@ -228,10 +229,10 @@ class _HomePageState extends ConsumerState<HomePage>
                             fontSize: 16, color: Colors.white70)),
                     const SizedBox(width: 8),
                     if (now != null)
-                      // 与天气详情页共用 WeatherUtils.iconOf（按和风 v7 代码映射），
-                      // 避免两套 emoji 映射导致首页与详情页图标不一致
-                      Text(WeatherUtils.iconOf(now.icon),
-                          style: const TextStyle(fontSize: 26)),
+                      // 与天气详情页共用 weatherIconOf（UI 层 Material 图标映射，
+                      // 由和风 v7 代码统一映射，首页/详情/预报图标一致）
+                      Icon(weatherIconOf(now.icon),
+                          size: 26, color: Colors.white),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -244,9 +245,13 @@ class _HomePageState extends ConsumerState<HomePage>
                   Row(
                     children: [
                       // 均分剩余宽度 + 省略号，杜绝窄屏横向 RenderFlex 溢出
-                      Expanded(child: _weatherMeta('💧 ${now.humidity}%')),
+                      Expanded(
+                        child: _weatherMeta(
+                            Icons.water_drop_outlined, '${now.humidity}%')),
                       const SizedBox(width: 10),
-                      Expanded(child: _weatherMeta('🌬️ ${now.windDir} ${now.windScale}级')),
+                      Expanded(
+                        child: _weatherMeta(Icons.air,
+                            '${now.windDir} ${now.windScale}级')),
                     ],
                   ),
                 ],
@@ -279,10 +284,21 @@ class _HomePageState extends ConsumerState<HomePage>
     );
   }
 
-  Widget _weatherMeta(String text) => Text(text,
-      style: const TextStyle(fontSize: 11, color: Colors.white70),
-      overflow: TextOverflow.ellipsis,
-      softWrap: false);
+  /// 天气卡底部小信息（湿度/风）：统一 Material 线性图标 + 文本，
+  /// 文本过长省略号截断，窄屏不溢出。
+  Widget _weatherMeta(IconData icon, String text) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: Colors.white70),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(text,
+                style: const TextStyle(fontSize: 11, color: Colors.white70),
+                overflow: TextOverflow.ellipsis,
+                softWrap: false),
+          ),
+        ],
+      );
 
   /// 今日概览：海拔 + 步数（两列卡片，点击分别跳转海拔/步数详情页）
   /// 海拔/步数来自延后加载的本地状态（_altitude / _steps），

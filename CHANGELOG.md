@@ -68,13 +68,26 @@
 - 启动页、关于页版本号硬编码 `v1.0.0` → 统一读 `AppConfig.appVersion`（v3.0.0），避免与 pubspec 漂移。
 - 发现页 AI 生成失败：原始异常文本 → 友好提示「小途暂时开小差了，请稍后重试～」。
 - 首页「当前海拔」：定位中卡死 → 加 8s 超时回退为「—」（并显示「定位中…」加载态，避免长期占位）。
-- 首页快捷操作网格 8 个 emoji 图标 → 统一 Material 线性图标（风格一致，更专业）。
+- **图标体系统一（emoji → Material 线性图标）**，覆盖全部界面图标位：
+  - 首页：快捷操作网格 8 项、天气卡湿度/风（💧🌬️ → 水滴/风图标）；
+  - 天气：首页大卡、详情实时大卡、24 小时预报、10 天预报、出行建议 chip
+    （新增 UI 层映射 `lib/core/ui/weather_icons.dart`——模型层 `WeatherUtils.iconOf` 保持纯 Dart
+    返回 emoji 以不破坏纯 Dart 测试，界面统一走 `weatherIconOf` / `adviceIconOf`）；
+  - 发现页：分类封面、AI 标题、快捷 Chip（🍜🏞️🤖）；收藏页分类图标；
+  - 拍照识物：相关推荐分区标题（🏞🍜）；轨迹页空态（🚀）；
+  - 万年历/美食详情提示条（💡）；一日游 AI 标题（🤖）；引导页 4 屏插画（🗺️📍🤖☁️）。
+  - 刻意保留的内容型 emoji：微信分享文案、节日名（🎉💝）、天气穿衣建议原文（模型数据）。
 
 ### 涉及关键文件
 
 | 文件 | 改动 |
 |------|------|
-| `lib/pages/home/home_page.dart` | 快捷网格 emoji→Material 图标；海拔加载态 |
+| `lib/core/ui/weather_icons.dart` | **新增** UI 层天气/建议图标映射（模型层保持纯 Dart） |
+| `lib/pages/home/home_page.dart` | 快捷网格 + 天气卡 emoji→Material 图标；海拔加载态 |
+| `lib/pages/shared/weather_detail_page.dart` | 实时/小时/10 天/建议图标统一 |
+| `lib/pages/shared/guide_page.dart` | 引导插画 emoji→Material 图标 |
+| `lib/pages/discover/discover_page.dart` | 分类封面 / AI / Chip 图标统一 |
+| `lib/pages/profile/favorites_page.dart`、`photo/photo_recognition_page.dart`、`shared/trajectory_page.dart`、`calendar/calendar_page.dart`、`food/food_detail_page.dart`、`oneday/oneday_page.dart` | 图标位统一 |
 | `lib/pages/shared/splash_page.dart` / `profile_page.dart` | 版本号统一 |
 | `lib/pages/discover/discover_page.dart` | AI 失败友好提示 |
 | `lib/pages/profile/settings_page.dart` | 注销账号入口 + 两步确认 |

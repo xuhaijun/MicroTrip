@@ -489,11 +489,18 @@ class _PhotoRecognitionPageState extends ConsumerState<PhotoRecognitionPage> {
         if (result.matchedScenery.isNotEmpty) ...[
           const Padding(
             padding: EdgeInsets.only(bottom: 8),
-            child: Text('🏞 相关美景',
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary)),
+            child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.landscape_outlined,
+                      size: 14, color: AppColors.textSecondary),
+                  SizedBox(width: 4),
+                  Text('相关美景',
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary)),
+                ]),
           ),
           _RecommendRow<SceneryItem>(
             items: result.matchedScenery,
@@ -508,11 +515,18 @@ class _PhotoRecognitionPageState extends ConsumerState<PhotoRecognitionPage> {
         if (result.matchedFood.isNotEmpty) ...[
           const Padding(
             padding: EdgeInsets.only(bottom: 8),
-            child: Text('🍜 相关美食',
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary)),
+            child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.restaurant_outlined,
+                      size: 14, color: AppColors.textSecondary),
+                  SizedBox(width: 4),
+                  Text('相关美食',
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary)),
+                ]),
           ),
           _RecommendRow<FoodItem>(
             items: result.matchedFood,

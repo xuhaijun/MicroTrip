@@ -454,7 +454,8 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
             child: Row(
               children: [
-                const Text('💡 ', style: TextStyle(fontSize: 16)),
+                const Icon(Icons.lightbulb_outline,
+                    size: 16, color: AppColors.primary),
                 Expanded(
                   child: Text(
                     info.suggestion,

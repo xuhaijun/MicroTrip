@@ -23,12 +23,12 @@ class _GuidePageState extends State<GuidePage> {
   final PageController _pageController = PageController();
   int _page = 0;
 
-  /// 引导内容（emoji 占位插画，遵循 App 既有「emoji 品牌图标」体系，无需引入图片资源）
+  /// 引导内容（Material 线性图标 + 品牌色圆底，风格与全局设计语言一致）
   static const List<_GuideSlide> _slides = [
-    _GuideSlide('🗺️', '行前规划', '天气、景点、美食一站搞定，\n出行计划提前安排妥帖。'),
-    _GuideSlide('📍', '轨迹记录', '精准记录每段旅程，距离、海拔\n随时可查、随时回放。'),
-    _GuideSlide('🤖', 'AI 助手', '拍照识物、智能行程，\n出行疑问随问随答。'),
-    _GuideSlide('☁️', '云端同步', '登录账号后，收藏与轨迹\n在多端安全同步。'),
+    _GuideSlide(Icons.map_outlined, '行前规划', '天气、景点、美食一站搞定，\n出行计划提前安排妥帖。'),
+    _GuideSlide(Icons.route_outlined, '轨迹记录', '精准记录每段旅程，距离、海拔\n随时可查、随时回放。'),
+    _GuideSlide(Icons.smart_toy_outlined, 'AI 助手', '拍照识物、智能行程，\n出行疑问随问随答。'),
+    _GuideSlide(Icons.cloud_sync_outlined, '云端同步', '登录账号后，收藏与轨迹\n在多端安全同步。'),
   ];
 
   /// 离开引导：标记已看 + 进入首页
@@ -88,7 +88,7 @@ class _GuidePageState extends State<GuidePage> {
                             gradient: AppColors.primaryGradientWith(0.12),
                             shape: BoxShape.circle,
                           ),
-                          child: Text(s.emoji, style: const TextStyle(fontSize: 88)),
+                          child: Icon(s.icon, size: 80, color: AppColors.primary),
                         ),
                         const SizedBox(height: 40),
                         Text(s.title,
@@ -166,8 +166,8 @@ class _GuidePageState extends State<GuidePage> {
 
 /// 引导单屏数据
 class _GuideSlide {
-  const _GuideSlide(this.emoji, this.title, this.desc);
-  final String emoji;
+  const _GuideSlide(this.icon, this.title, this.desc);
+  final IconData icon;
   final String title;
   final String desc;
 }

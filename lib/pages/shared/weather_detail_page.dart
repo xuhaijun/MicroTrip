@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/animations/anim_effects.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/ui/weather_icons.dart';
 import '../../models/weather.dart';
 import '../../providers/app_providers.dart';
 import '../../services/weather_service.dart';
@@ -77,12 +78,10 @@ class _WeatherDetailPageState extends ConsumerState<WeatherDetailPage> {
                     child: GradientCard(
                       child: Column(
                         children: [
-                          // 天气图标：按和风 v7 代码映射，与首页/10 天预报同一来源
+                          // 天气图标：weatherIconOf 按和风 v7 代码统一定位到 Material 图标
                           if (now != null)
-                            Text(
-                              WeatherUtils.iconOf(now.icon),
-                              style: const TextStyle(fontSize: 56),
-                            ),
+                            Icon(weatherIconOf(now.icon),
+                                size: 56, color: Colors.white),
                           if (now != null) const SizedBox(height: 4),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -162,10 +161,10 @@ class _WeatherDetailPageState extends ConsumerState<WeatherDetailPage> {
                                                 fontSize: 12,
                                                 color: AppColors.textHint)),
                                         const SizedBox(height: 8),
-                                        // 天气图标：按和风 v7 代码映射，与实时卡/10 天预报同一来源
-                                        Text(WeatherUtils.iconOf(h.icon),
-                                            style: const TextStyle(
-                                                fontSize: 22)),
+                                        // 天气图标：与实时卡/10 天预报同一映射源
+                                        Icon(weatherIconOf(h.icon),
+                                            size: 22,
+                                            color: AppColors.primary),
                                         const SizedBox(height: 8),
                                         Text('${h.temp}°',
                                             style: const TextStyle(
@@ -266,9 +265,8 @@ class _WeatherDetailPageState extends ConsumerState<WeatherDetailPage> {
                   style: const TextStyle(
                       fontSize: 12, color: AppColors.textSecondary)),
               const SizedBox(height: 8),
-              Text(WeatherUtils.iconOf(d.iconDay),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 26)),
+              Icon(weatherIconOf(d.iconDay),
+                  size: 26, color: AppColors.primary),
               const SizedBox(height: 8),
               Text('${d.tempMax}°',
                   textAlign: TextAlign.center,
@@ -304,7 +302,8 @@ class _WeatherDetailPageState extends ConsumerState<WeatherDetailPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(a.icon),
+            Icon(adviceIconOf(a.icon),
+                size: 15, color: AppColors.primary),
             const SizedBox(width: 6),
             Text(a.text,
                 style: const TextStyle(

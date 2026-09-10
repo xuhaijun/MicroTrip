@@ -324,7 +324,8 @@ class _FoodDetailPageState extends ConsumerState<FoodDetailPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('💡', style: TextStyle(fontSize: 16)),
+          const Icon(Icons.lightbulb_outline,
+              size: 16, color: AppColors.primary),
           const SizedBox(width: 8),
           Expanded(
             child: Text(food.tips,

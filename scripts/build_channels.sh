@@ -17,10 +17,13 @@ OUT="$ROOT/build/channels"
 mkdir -p "$OUT"
 VERSION="3.0.0"
 
-# Git Bash 下 flutter.bat 需要 ProgramFiles 等环境变量，用数组保留引号
-ENV_PREFIX=(env 'PROGRAMFILES(X86)=C:\Program Files (x86)' \
+# Git Bash 下 flutter.bat 需要 ProgramFiles 等环境变量（用数组保留引号）；
+# 同时清掉本机注入的 http(s)_proxy —— 否则 flutter_tester / 本地 socket 会被代理拦截。
+ENV_PREFIX=(env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u all_proxy -u ALL_PROXY \
+                'PROGRAMFILES(X86)=C:\Program Files (x86)' \
                 PROGRAMFILES='C:\Program Files' \
-                'CommonProgramFiles(X86)=C:\Program Files (x86)\Common Files')
+                'CommonProgramFiles(X86)=C:\Program Files (x86)\Common Files' \
+                NO_PROXY=127.0.0.1,localhost)
 
 build_apk() {
   local ch="$1"

@@ -21,11 +21,20 @@ class TrajectoryPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('🚀 轨迹录制即将上线',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white)),
+                const Row(
+                  children: [
+                    Icon(Icons.rocket_launch_outlined,
+                        size: 18, color: Colors.white),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: Text('轨迹录制即将上线',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white)),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 8),
                 Text(
                   'Phase 2 将基于 geolocator 实现：\n'
