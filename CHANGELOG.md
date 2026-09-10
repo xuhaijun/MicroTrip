@@ -49,6 +49,43 @@
 
 ---
 
+## [Unreleased] — 2026-09-10 界面美化 / 多渠道打包 / 上架合规
+
+> 全量 UI 审计（模拟器 + 真机截图）→ P0 修复 → 首屏快速操作网格 emoji 统一替换为 Material 线性图标；
+> 产出 5 个渠道包（华为/小米/OPPO/vivo APK + Google Play AAB）；补齐账号注销入口等上架合规项。
+> 静态检查 `flutter analyze` → No issues；`flutter test` 50 用例全绿。
+
+### Added（新增）
+- **多渠道打包**：`scripts/build_channels.sh`（Bash 版，规避 PowerShell 下 `flutter.bat` 缺 `ProgramFiles` 环境变量的坑，
+  用 `env` 注入）。`--dart-define=CHANNEL=<渠道>` 编译期注入，产物输出 `build/channels/`：
+  `microtrip-3.0.0-{huawei,xiaomi,oppo,vivo}.apk` 与 `microtrip-3.0.0-googleplay.aab`。
+- **上架合规**：设置页新增「注销账号」入口（两步确认 + 后端 `DELETE /api/v1/auth/account` + 清本地/预填）。
+- **隐私政策托管版**：`privacy_policy.html`（根目录，与应用内《隐私政策》同源，可发布到 Gitee Pages 满足渠道后台 URL 要求）。
+- **发布指南**：`docs/RELEASE_CHANNELS.md`（各商店提交流程 + 物料清单 + 隐私 URL 托管）；`docs/IOS_RELEASE_CHECKLIST.md`（Mac 归档步骤）。
+- **iOS 隐私清单**：`ios/Runner/PrivacyInfo.xcprivacy`（Apple 2024-05 起强制）。
+
+### Changed（优化 / 美化）
+- 启动页、关于页版本号硬编码 `v1.0.0` → 统一读 `AppConfig.appVersion`（v3.0.0），避免与 pubspec 漂移。
+- 发现页 AI 生成失败：原始异常文本 → 友好提示「小途暂时开小差了，请稍后重试～」。
+- 首页「当前海拔」：定位中卡死 → 加 8s 超时回退为「—」（并显示「定位中…」加载态，避免长期占位）。
+- 首页快捷操作网格 8 个 emoji 图标 → 统一 Material 线性图标（风格一致，更专业）。
+
+### 涉及关键文件
+
+| 文件 | 改动 |
+|------|------|
+| `lib/pages/home/home_page.dart` | 快捷网格 emoji→Material 图标；海拔加载态 |
+| `lib/pages/shared/splash_page.dart` / `profile_page.dart` | 版本号统一 |
+| `lib/pages/discover/discover_page.dart` | AI 失败友好提示 |
+| `lib/pages/profile/settings_page.dart` | 注销账号入口 + 两步确认 |
+| `lib/services/auth_service.dart` | `deleteAccount()` 后端删除 + 清本地 |
+| `lib/providers/app_providers.dart` | 海拔定位超时回退 |
+| `scripts/build_channels.sh` / `build_channels.ps1` | 多渠道打包脚本 |
+| `privacy_policy.html` | 可托管隐私政策 |
+| `docs/RELEASE_CHANNELS.md` / `docs/IOS_RELEASE_CHECKLIST.md` / `docs/UI_AUDIT_2026-09-10.md` | 发布与审计文档 |
+
+---
+
 ## [Phase 5] — 云端同步与后台录制（历史）
 
 - 后端服务 MicroTripServer（Node.js + Express + SQLite）：JWT 认证 + 轨迹同步 API。

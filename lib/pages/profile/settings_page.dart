@@ -249,6 +249,56 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         trailing: Switch(value: value, onChanged: onChanged),
       );
 
+  /// 注销账号：两步确认（合规要求，避免误触）→ 调用服务删除 → 跳登录页。
+  Future<void> _deleteAccount() async {
+    final user = AuthService.currentUser;
+    // 第一步：风险告知
+    final first = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('注销账号'),
+        content: Text(
+            '将永久删除账号「${user?.phone ?? ''}」及云端同步的轨迹等数据，注销后无法恢复。\n\n确定要继续吗？'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('取消')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            child: const Text('继续'),
+          ),
+        ],
+      ),
+    );
+    if (first != true || !mounted) return;
+    // 第二步：最终确认
+    final second = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('最终确认'),
+        content: const Text('注销操作不可撤销，云端数据将立即删除。'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('再想想')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            child: const Text('确认注销'),
+          ),
+        ],
+      ),
+    );
+    if (second != true || !mounted) return;
+    final ok = await AuthService.deleteAccount();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(ok ? '账号已注销，期待下次再见' : '注销失败，请检查网络后稍后再试'),
+    ));
+    if (ok) context.go('/login');
+  }
+
   @override
   Widget build(BuildContext context) {
     final useMock = ref.watch(useMockDataProvider);
@@ -385,6 +435,27 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 12),
+                // ---------------- 账号注销（商店合规：小米等渠道强制要求提供） ----------------
+                if (AuthService.isLoggedIn)
+                  AppCard(
+                    padding: EdgeInsets.zero,
+                    child: ListTile(
+                      leading: const Icon(Icons.delete_forever_outlined,
+                          size: 22, color: AppColors.danger),
+                      title: const Text('注销账号',
+                          style: TextStyle(
+                              fontSize: 15,
+                              color: AppColors.danger,
+                              fontWeight: FontWeight.w600)),
+                      subtitle: const Text('删除账号及云端同步数据，不可恢复',
+                          style:
+                              TextStyle(fontSize: 12, color: AppColors.textHint)),
+                      trailing: const Icon(Icons.chevron_right,
+                          color: AppColors.textHint),
+                      onTap: _deleteAccount,
+                    ),
+                  ),
                 const SizedBox(height: 20),
 
                 // ---------------- 数据与位置（新增自动定位开关） ----------------

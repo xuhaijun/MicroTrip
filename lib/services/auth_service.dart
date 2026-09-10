@@ -312,6 +312,41 @@ class AuthService {
     await AppStorage.remove(kUserProfile);
   }
 
+  /// 注销账号（应用商店合规要求：小米等渠道强制提供账号注销入口）。
+  ///
+  /// - 云端模式：先请求后端 `DELETE {apiBase}/auth/account` 删除云端账号与数据，
+  ///   成功后才清本地；失败返回 false（UI 提示稍后重试，不静默丢失账号）。
+  /// - 本地演示模式：清空本地账号库中该手机号的记录 + 会话，直接生效。
+  /// 返回 true 表示注销完成，UI 应跳转登录页并给出提示。
+  static Future<bool> deleteAccount() async {
+    final user = currentUser;
+    if (serverUrl.isNotEmpty && token != null) {
+      try {
+        // skipAuthHandling：注销请求若返回 401/403 不应再触发全局登出递归
+        await HttpClient.delete(
+          '$apiBase/auth/account',
+          needAuth: true,
+          skipAuthHandling: true,
+        );
+      } catch (_) {
+        // 云端删除失败：保留账号，交由 UI 提示重试
+        return false;
+      }
+    }
+    await clearSession();
+    // 清本地账号库中的该手机号记录 + 上次登录手机号（演示/本地注册账号）
+    if (user != null) {
+      final raw = AppStorage.getObject(kLocalAccounts);
+      if (raw is Map) {
+        final accounts = Map<String, dynamic>.from(raw);
+        accounts.remove(user.phone);
+        await AppStorage.setObject(kLocalAccounts, accounts);
+      }
+    }
+    await AppStorage.remove(kLastPhone);
+    return true;
+  }
+
   // ==================== JWT 解析 ====================
 
   /// 解析 JWT payload（不校验签名；仅用于读取过期时间等公开信息）

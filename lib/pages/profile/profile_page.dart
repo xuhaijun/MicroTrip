@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/animations/anim_effects.dart';
+import '../../core/config/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/app_providers.dart';
 import '../../providers/auth_provider.dart';
@@ -237,7 +238,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 12, color: AppColors.textHint)),
                   const SizedBox(height: 4),
-                  const Text('v1.0.0',
+                  Text('v${AppConfig.appVersion}',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
                 ],

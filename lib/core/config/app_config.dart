@@ -51,7 +51,17 @@ class AppConfig {
 
   // ==================== 应用信息 ====================
   static const String appName = '微旅途';
-  static const String appVersion = '1.0.0';
+
+  /// 应用版本号：与 pubspec.yaml 的 version 保持一致（发版时两处同步改）。
+  static const String appVersion = '3.0.0';
+
+  /// 渠道号：由构建脚本通过 --dart-define=CHANNEL=huawei 注入，
+  /// 本地直跑 / 未注入时为 official（官网直装包）。
+  /// 各商店上架包使用 scripts/build_channels.ps1 一键产出。
+  static const String channel = String.fromEnvironment(
+    'CHANNEL',
+    defaultValue: 'official',
+  );
   static const String storagePrefix = 'travel_';
 
   // ==================== 缓存过期时间 ====================

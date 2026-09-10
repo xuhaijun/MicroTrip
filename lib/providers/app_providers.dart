@@ -476,16 +476,18 @@ class AltitudeNotifier extends AsyncNotifier<double?> {
   Future<double?> _locate({required bool forceFresh}) async {
     try {
       if (!await LocationService.ensurePermission()) return null;
+      // 统一 8 秒超时兜底：模拟器/室内 GPS 信号弱时 getCurrentPosition 可能
+      // 长时间不回调，避免首页「定位中…」永久卡住。
       final pos = forceFresh
           ? await Geolocator.getCurrentPosition(
               locationSettings:
                   const LocationSettings(accuracy: LocationAccuracy.low),
-            )
+            ).timeout(const Duration(seconds: 8))
           : (await Geolocator.getLastKnownPosition() ??
               await Geolocator.getCurrentPosition(
                 locationSettings:
                     const LocationSettings(accuracy: LocationAccuracy.low),
-              ));
+              ).timeout(const Duration(seconds: 8)));
       return pos.altitude;
     } catch (_) {
       return null;

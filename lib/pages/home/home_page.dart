@@ -32,6 +32,7 @@ class _HomePageState extends ConsumerState<HomePage>
   // 避免 Geolocator 定位与 Health Connect 授权在启动关键路径上阻塞或弹窗。
   // 二者各自独立加载，数据就绪后卡片点击分别跳转对应详情页（/altitude-detail、/step-detail）。
   double? _altitude;
+  bool _altitudeLoading = true;
   int? _steps;
   bool _secondaryLoaded = false;
 
@@ -70,6 +71,7 @@ class _HomePageState extends ConsumerState<HomePage>
     ref.listenManual(altitudeProvider, (prev, next) {
       if (!mounted) return;
       _altitude = next.valueOrNull;
+      _altitudeLoading = next.isLoading;
       setState(() {});
     }, fireImmediately: true);
     ref.listenManual(stepProvider, (prev, next) {
@@ -301,7 +303,12 @@ class _HomePageState extends ConsumerState<HomePage>
                 child: _OverviewItem(
                   icon: Icons.terrain_outlined,
                   label: '当前海拔',
-                  value: altitude == null ? '定位中…' : '${altitude.round()} m',
+                  // 三态：定位中（loading）→ 暂不可用（超时/未授权）→ 数值
+                  value: _altitudeLoading
+                      ? '定位中…'
+                      : altitude == null
+                          ? '暂不可用'
+                          : '${altitude.round()} m',
                 ),
               ),
             ),
@@ -523,14 +530,14 @@ class _HomePageState extends ConsumerState<HomePage>
   /// 快捷入口宫格（两行四列满 8 项：美食/美景/录制轨迹/拍照识物/一日游/万年历/备忘提醒/海拔信息）
   Widget _buildQuickEntries(BuildContext context) {
     final entries = [
-      ('🍜', '美食', () => context.push('/food')),
-      ('🏞️', '美景', () => context.push('/scenery')),
-      ('🗺️', '录制轨迹', () => context.push('/trajectory-record')),
-      ('📷', '拍照识物', () => context.push('/photo-recognition')),
-      ('🏙️', '一日游', () => context.push('/oneday')),
-      ('📅', '万年历', () => context.push('/calendar')),
-      ('📝', '备忘提醒', () => context.push('/trip/memo')),
-      ('⛰️', '海拔信息', () => context.push('/altitude-detail')),
+      (Icons.restaurant_outlined, '美食', () => context.push('/food')),
+      (Icons.landscape_outlined, '美景', () => context.push('/scenery')),
+      (Icons.fiber_manual_record, '录制轨迹', () => context.push('/trajectory-record')),
+      (Icons.camera_alt_outlined, '拍照识物', () => context.push('/photo-recognition')),
+      (Icons.explore_outlined, '一日游', () => context.push('/oneday')),
+      (Icons.calendar_month_outlined, '万年历', () => context.push('/calendar')),
+      (Icons.edit_note_outlined, '备忘提醒', () => context.push('/trip/memo')),
+      (Icons.terrain_outlined, '海拔信息', () => context.push('/altitude-detail')),
     ];
     return AppCard(
       // 底部留 14 呼吸空间：宫格内容与卡片下边缘不再紧贴
@@ -578,7 +585,7 @@ class _HomePageState extends ConsumerState<HomePage>
                             color: AppColors.primaryLight.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
-                          child: Text(e.$1, style: const TextStyle(fontSize: 24)),
+                          child: Icon(e.$1, size: 24, color: AppColors.primary),
                         ),
                         const SizedBox(height: 6),
                         Text(e.$2,

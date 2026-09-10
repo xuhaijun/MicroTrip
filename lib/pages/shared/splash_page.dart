@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/storage/app_storage.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -177,7 +178,7 @@ class _SplashPageState extends State<SplashPage> {
               ),
               const SizedBox(height: 16),
               Text(
-                'v1.0.0',
+                'v${AppConfig.appVersion}',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.white.withValues(alpha: 0.6),

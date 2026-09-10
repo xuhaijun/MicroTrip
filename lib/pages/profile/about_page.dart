@@ -64,6 +64,10 @@ class AboutPage extends StatelessWidget {
                       Text('v${AppConfig.appVersion} · Flutter 跨端版',
                           style: const TextStyle(
                               fontSize: 13, color: AppColors.textHint)),
+                      const SizedBox(height: 2),
+                      Text('渠道：${AppConfig.channel}',
+                          style: const TextStyle(
+                              fontSize: 11, color: AppColors.textTertiary)),
                     ],
                   ),
                 ),

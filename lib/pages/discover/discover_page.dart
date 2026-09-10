@@ -322,10 +322,27 @@ class _SmartRecommendState extends ConsumerState<_SmartRecommend> {
       );
       if (mounted) setState(() => _result = reply);
     } catch (e) {
-      if (mounted) setState(() => _result = '生成失败：$e');
+      // 面向用户友好化：不暴露 ServiceException(429/1305) 等原始异常细节。
+      if (mounted) setState(() => _result = _friendlyError(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// 把底层异常翻译成用户能看懂的文案（原始异常仅保留在 debugPrint 便于排查）。
+  String _friendlyError(Object e) {
+    debugPrint('AI 生成失败: $e');
+    final s = e.toString();
+    if (s.contains('429') || s.contains('1305') || s.contains('频繁')) {
+      return '小途现在有点忙（请求的人太多啦），稍等片刻再点「重新生成」试试～';
+    }
+    if (s.contains('401') || s.contains('403')) {
+      return 'AI 服务暂时无法访问，请在「我的 → 设置」检查接口配置是否有效。';
+    }
+    if (s.contains('SocketException') || s.contains('Timeout')) {
+      return '网络似乎不太顺畅，请检查网络后点击「重新生成」。';
+    }
+    return '生成失败啦，点击「重新生成」再试一次；多次失败可稍后再来。';
   }
 
   @override
