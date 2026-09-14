@@ -201,7 +201,7 @@ class _PermissionManagePageState extends State<PermissionManagePage> {
                         actionLabel: _locActionLabel,
                         onAction: _loading ? null : _handleLocation,
                       ),
-                      const Divider(height: 1, indent: 70, endIndent: 16),
+                      const Divider(height: 1, indent: 70, endIndent: 12),
                       _PermissionRow(
                         icon: Icons.notifications_active_outlined,
                         title: '通知',
@@ -211,7 +211,7 @@ class _PermissionManagePageState extends State<PermissionManagePage> {
                         actionLabel: _notifActionLabel,
                         onAction: _loading ? null : _handleNotification,
                       ),
-                      const Divider(height: 1, indent: 70, endIndent: 16),
+                      const Divider(height: 1, indent: 70, endIndent: 12),
                       _PermissionRow(
                         icon: Icons.directions_walk,
                         title: '健康数据（步数）',

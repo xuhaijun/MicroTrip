@@ -12,6 +12,18 @@ import '../../services/sync_service.dart';
 import '../../services/weather_push_service.dart';
 import '../shared/widgets/common_widgets.dart';
 
+/// 卡片内列表分隔线：左端对齐行标题文字、右端内缩 12，两端都不顶到卡片边。
+///
+/// `indent: 40` 来自**实测 + 源码双重核对**：本页所有行都是
+/// `ListTile(contentPadding: EdgeInsets.zero)`，其标题起点为
+/// `max(minLeadingWidth, leading 宽) + horizontalTitleGap`。
+/// Material 3 下 `minLeadingWidth = 24`（**不是 M2 的 40**）、
+/// `horizontalTitleGap = 16`，leading 图标 20 < 24 → 标题起点 = 24 + 16 = **40**，
+/// 与 `getRect` 实测的「标题文字左 − 行左 = 40」完全一致。
+/// endIndent 12 与「我的」页 / 关于页 / 权限页统一（全 App 同一观感）。
+/// 相关回归用例：`test/settings_divider_align_test.dart`。
+const Divider _kListDivider = Divider(height: 1, indent: 40, endIndent: 12);
+
 /// ============================================================
 /// 设置页（对应小程序 subpackages/tools/pages/settings）
 /// 支持 App 内覆盖 天气 / AI 接口配置（持久化到 prefs，
@@ -476,7 +488,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         value: useMock,
                         onChanged: _toggleUseMock,
                       ),
-                      const Divider(height: 1),
+                      _kListDivider,
                       _switchRow(
                         icon: Icons.notifications_active_outlined,
                         title: '每日天气提醒',
@@ -484,7 +496,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         value: _weatherNotif,
                         onChanged: _toggleWeatherNotif,
                       ),
-                      const Divider(height: 1),
+                      _kListDivider,
                       _switchRow(
                         icon: Icons.my_location_outlined,
                         title: '自动定位',
@@ -493,7 +505,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         onChanged: (v) =>
                             ref.read(autoLocateProvider.notifier).set(v),
                       ),
-                      const Divider(height: 1),
+                      _kListDivider,
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(Icons.admin_panel_settings_outlined,
@@ -536,7 +548,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               backgroundColor: AppColors.primary),
                         ),
                       ),
-                      const Divider(height: 1),
+                      _kListDivider,
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(Icons.cloud_queue_outlined,
@@ -572,7 +584,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             color: AppColors.textHint),
                         onTap: _reset,
                       ),
-                      const Divider(height: 1),
+                      _kListDivider,
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(Icons.delete_outline,
@@ -608,7 +620,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           }
                         },
                       ),
-                      const Divider(height: 1),
+                      _kListDivider,
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(Icons.info_outline,
@@ -620,7 +632,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             color: AppColors.textHint),
                         onTap: () => context.push('/profile/about'),
                       ),
-                      const Divider(height: 1),
+                      _kListDivider,
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(Icons.description_outlined,
@@ -632,7 +644,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             color: AppColors.textHint),
                         onTap: () => context.push('/user-agreement'),
                       ),
-                      const Divider(height: 1),
+                      _kListDivider,
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(Icons.privacy_tip_outlined,
