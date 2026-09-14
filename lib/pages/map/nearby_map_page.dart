@@ -73,6 +73,12 @@ const _kCategories = <String, _CategoryMeta>{
   'hotel': _CategoryMeta('酒店', Icons.hotel, AppColors.success),
 };
 
+/// 底部 POI 列表容器高度。
+/// 卡片 3 行内容（名称 / 分类标签 / 评分·距离）实测约 51（已给文本设固定行高，
+/// 高度可预测），加上卡片内边距 20 与列表上下留白 20 → 96。
+/// 取 100 留出余量：系统字体放大到 1.5 倍仍不溢出（原 116 时卡片中部留白过大）。
+const double _kListHeight = 104;
+
 class NearbyMapPage extends ConsumerStatefulWidget {
   const NearbyMapPage({super.key, this.initialFocus});
 
@@ -432,7 +438,17 @@ class _NearbyMapPageState extends ConsumerState<NearbyMapPage> {
                   left: 12,
                   right: 12,
                   bottom: 12,
-                  child: _BottomPanel(
+                  // 文本缩放上限 1.2：底部卡片高度是固定值，系统大字体下
+                  // 3 行内容会被撑出卡片（与万年历网格同一手法，2026-09-14）
+                  child: MediaQuery(
+                    data: MediaQuery.of(context).copyWith(
+                      textScaler: TextScaler.linear(
+                        (MediaQuery.of(context).textScaler.scale(16) / 16) > 1.2
+                            ? 1.2
+                            : (MediaQuery.of(context).textScaler.scale(16) / 16),
+                      ),
+                    ),
+                    child: _BottomPanel(
                     category: _category,
                     pois: pois,
                     selected: selected,
@@ -446,6 +462,7 @@ class _NearbyMapPageState extends ConsumerState<NearbyMapPage> {
                         context.push(poi.detailPath!);
                       }
                     },
+                    ),
                   ),
                 ),
               ],
@@ -458,8 +475,9 @@ class _NearbyMapPageState extends ConsumerState<NearbyMapPage> {
 
   /// 底部面板需要预留的高度（用于定位按钮错位）
   double _panelBottom(List<_Poi> pois, _Poi? selected) {
-    // 列表固定高度约 132；若有选中详情再加 92
-    return 12 + 132 + (selected != null ? 92 : 0);
+    // 面板总高 = 底部留白 12 + 列表容器 _kListHeight
+    //          + 选中详情卡（含 10 外边距，约 86 高，取 92 留余量）
+    return 12 + _kListHeight + (selected != null ? 92 : 0);
   }
 
   /// POI 地图标记
@@ -660,7 +678,7 @@ class _BottomPanel extends StatelessWidget {
           ),
         // 横向列表
         Container(
-          height: 116,
+          height: _kListHeight,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -674,11 +692,13 @@ class _BottomPanel extends StatelessWidget {
                 )
               : ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md, vertical: 10),
                   itemCount: pois.length,
                   separatorBuilder: (_, _) => const SizedBox(width: 10), // ignore: unnecessary_underscores
                   itemBuilder: (_, i) {
                     final p = pois[i];
+                    final meta = _kCategories[p.category]!;
                     final active = selected != null && selected == p;
                     return GestureDetector(
                       onTap: () => onSelect(i),
@@ -690,31 +710,48 @@ class _BottomPanel extends StatelessWidget {
                               ? AppColors.primaryLight.withValues(alpha: 0.12)
                               : AppColors.surface,
                           borderRadius: BorderRadius.circular(AppRadius.md),
+                          // 选中态加粗描边，扫一眼就能锁定当前项
                           border: Border.all(
                             color: active
                                 ? AppColors.primary
                                 : AppColors.border,
+                            width: active ? 1.4 : 1,
                           ),
                         ),
+                        // 3 行紧凑排布（名称 / 分类标签 / 评分·距离）：
+                        // 1. 去掉原来的 Spacer——它在卡片中部撑出一大块空白，且名称只剩一行宽度；
+                        // 2. 补上「分类」文字标签——按「全部」筛选时只靠图标认不出类型；
+                        // 3. 名称独占一行，长名字能多显示几个字。
                         child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                _CategoryIcon(
-                                    category: p.category, size: 18),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(p.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600)),
-                                ),
-                              ],
+                            Text(p.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                // 固定行高：中文默认行高随系统字体浮动，
+                                // 固定后才能算准卡片高度、避免溢出（实测曾溢出 7px）
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    height: 1.2,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary)),
+                            const SizedBox(height: 5),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: meta.color.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                              child: Text(meta.label,
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      height: 1.1,
+                                      fontWeight: FontWeight.w600,
+                                      color: meta.color)),
                             ),
-                            const Spacer(),
+                            const SizedBox(height: 4),
                             Row(
                               children: [
                                 const Icon(Icons.star,
@@ -723,13 +760,23 @@ class _BottomPanel extends StatelessWidget {
                                 Text(p.rating.toStringAsFixed(1),
                                     style: const TextStyle(
                                         fontSize: 11,
+                                        height: 1.2,
                                         color: AppColors.textSecondary)),
                                 const Spacer(),
-                                if (p.distanceText.isNotEmpty)
-                                  Text(p.distanceText,
-                                      style: const TextStyle(
-                                          fontSize: 11,
-                                          color: AppColors.textHint)),
+                                if (p.distanceText.isNotEmpty) ...[
+                                  const Icon(Icons.near_me,
+                                      size: 11, color: AppColors.textHint),
+                                  const SizedBox(width: 2),
+                                  Flexible(
+                                    child: Text(p.distanceText,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                            fontSize: 11,
+                                            height: 1.2,
+                                            color: AppColors.textHint)),
+                                  ),
+                                ],
                               ],
                             ),
                           ],

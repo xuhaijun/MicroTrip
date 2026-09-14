@@ -187,6 +187,11 @@ class _PermissionManagePageState extends State<PermissionManagePage> {
                   padding: EdgeInsets.zero,
                   child: Column(
                     children: [
+                      // 分隔线规则（2026-09-14 统一）：左右都要留白，并与标题文字对齐。
+                      // indent 70 = _PermissionRow 的文字起点（实测屏幕 x=86，减卡片左边缘 16）：
+                      // 行内 16 内边距 + 40 图标框 + 14 间距；
+                      // endIndent 16 与行右侧内边距对齐（旧值 indent:56 且无 endIndent，
+                      // 线条只到图标右边缘、右端还顶到卡片边，所以显得难看）。
                       _PermissionRow(
                         icon: Icons.my_location,
                         title: '定位',
@@ -196,7 +201,7 @@ class _PermissionManagePageState extends State<PermissionManagePage> {
                         actionLabel: _locActionLabel,
                         onAction: _loading ? null : _handleLocation,
                       ),
-                      const Divider(height: 1, indent: 56),
+                      const Divider(height: 1, indent: 70, endIndent: 16),
                       _PermissionRow(
                         icon: Icons.notifications_active_outlined,
                         title: '通知',
@@ -206,7 +211,7 @@ class _PermissionManagePageState extends State<PermissionManagePage> {
                         actionLabel: _notifActionLabel,
                         onAction: _loading ? null : _handleNotification,
                       ),
-                      const Divider(height: 1, indent: 56),
+                      const Divider(height: 1, indent: 70, endIndent: 16),
                       _PermissionRow(
                         icon: Icons.directions_walk,
                         title: '健康数据（步数）',

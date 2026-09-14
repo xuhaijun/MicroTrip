@@ -11,8 +11,9 @@ import '../shared/widgets/common_widgets.dart';
 
 /// ============================================================
 /// 万年历页（迁移自小程序 subpackages/tools/pages/calendar/calendar.js）
-/// - 6x7 月历网格：日期格顶部小标签（休/班 > 农历「节气 > 节日 > 初一月份 > 农历日」）
-/// - 「休 / 班」标签：法定放假红、调休补班橙，优先于农历日期显示
+/// - 6x7 月历网格：日期格顶部「休/班」小标签 + 底部阴历标签**并存显示**
+///   （标签在上、阴历在下；旧版「有休/班时农历让位」已弃用，假日格不再留白）
+/// - 「休 / 班」标签：法定放假红、调休补班橙，与阴历标签同时显示
 /// - 今天渐变高亮、周末红色（补班日不再标红）
 /// - 左右滑动 / 卡片内按钮切换月份、「今天」一键回位
 /// - 点击日期 → 老黄历详情面板（干支/生肖/宜忌/冲煞/纳音/彭祖/星宿/建除/星座）
@@ -227,17 +228,29 @@ class _CalendarPageState extends State<CalendarPage> {
   // ==================== 月历网格 ====================
 
   Widget _buildGrid(List<CalendarDayInfo> days) {
-    return GridView.builder(
+    // 文本缩放上限：华为等机型系统字体缩放 >1.0 时，固定像素的日期/农历字号被放大、
+    // 整格内容总高超出格子 → 垂直溢出。把本网格文本缩放钳到 1.3，既保证任意系统缩放下
+    // 都不溢出，又让日期数字保持清晰（不靠整格 FittedBox 模糊缩放）。
+    final factor = MediaQuery.of(context).textScaler.scale(16) / 16;
+    final capped = factor > 1.3 ? 1.3 : factor;
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(capped)),
+      child: GridView.builder(
+      // padding 必须显式置零：GridView 默认会套用 MediaQuery.padding（本机 = 状态栏
+      // 138px + 底部导航栏），而这个网格是非滚动的嵌套网格，于是顶部凭空多出一大段空白
+      // ——正是「星期栏与日期内容间距过大」的根因（2026-09-14 实测修复）。
+      padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 7,
         mainAxisSpacing: 2,
         crossAxisSpacing: 2,
-        childAspectRatio: 0.78,
+        childAspectRatio: 0.74,
       ),
       itemCount: days.length,
       itemBuilder: (context, i) => _buildDayCell(days[i]),
+      ),
     );
   }
 
@@ -266,73 +279,104 @@ class _CalendarPageState extends State<CalendarPage> {
               : null,
         ),
         // 垂直排布：休/班（顶部）→ 公历日数字 → 农历
-        // - 「休 / 班」置于数字上方（2026-09-10 需求），置于格内居中列顶部；
-        // - 有「休 / 班」时农历让位（同一格只放一个标签，休/班赢）；
-        // - 格宽仅 ~58px、格高 ~67px（aspect 0.78），顶部标签不会挤压数字，
-        //   节日名仍由老黄历卡片承载，避免同一信息三处重复。
-        child: Center(
+        // - 「休 / 班」置于数字上方（2026-09-10 需求）；
+        // - 阴历/农历**始终显示**，与休/班并存（标签在上、农历在下）；
+        //   旧版「有休/班时农历让位」会让假日格下方留白、信息缺失，已改为两者同显。
+        // - 内容**垂直水平居中**（mainAxisAlignment:center + FittedBox 居中）：
+        //   早期用 topCenter+顶部留白让日期贴顶，但格子下方留空、与星期表头/邻格视觉错位，
+        //   华为大字体下更明显 → 改为居中（这是修复「显示有问题」的关键）。
+        // - 溢出防护：不再依赖整格 FittedBox 等比缩小（会把日期数字一起缩到很小、观感差），
+        //   改由 _buildGrid 用 MediaQuery 把本网格文本缩放上限钳到 1.3——系统字体再大也不会
+        //   撑爆固定像素布局，且日期保持清晰不模糊（2026-09-14 修复）。
+        //   FittedBox 仅作极端情况兜底（scaleDown 居中），正常缩放下 scale=1 原样居中。
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.center,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // 「休 / 班」小标签（顶部）
-              if (isArrangement) ...[
-                ArrangementBadge(
-                  label: holiday.label,
-                  isHoliday: holiday.isHoliday,
-                  inMonth: inMonth,
+                // 「休 / 班」小标签（顶部）
+                // 固定高度槽位：当天没有休/班时也占同样高度。
+                // 否则「有标签的格子内容更高 → 整列居中后被整体顶下去」，
+                // 同一行里日期数字的 y 坐标不一致，看起来就是"日期没对齐"（2026-09-14 修复）。
+                //
+                // 这里用「空 SizedBox + 条件渲染」，**不要**改成 Visibility(maintainSize:true)：
+                // 后者虽然也占位，但会把一个不可见的「休」字留在 widget 树里，
+                // 无障碍语义与 find.text 都会撞见这个幽灵文本（2026-09-14 单测抓到）。
+                // 槽高由 ArrangementBadge.slotHeight 精确算出，与标签真实高度同源。
+                SizedBox(
+                  height: ArrangementBadge.slotHeight(
+                    ArrangementBadge.defaultFontSize,
+                    MediaQuery.of(context).textScaler,
+                  ),
+                  child: isArrangement
+                      ? ArrangementBadge(
+                          // isArrangement 为真时 holiday 必非空（流分析已确认）
+                          label: holiday.label,
+                          isHoliday: holiday.isHoliday,
+                          inMonth: inMonth,
+                        )
+                      : null,
                 ),
-                const SizedBox(height: 2),
+                // 休/班标签 → 日期数字：2 → 1
+                const SizedBox(height: 1),
+                // 公历日数字（今天渐变圆底）；直径 28 → 26 → 24，
+                // 数字四周留白越少，「休/班标签↔数字」「数字↔农历」的视觉间距就越紧
+                Container(
+                  width: 24,
+                  height: 24,
+                  alignment: Alignment.center,
+                  decoration: day.isToday
+                      ? BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                          shape: BoxShape.circle,
+                        )
+                      : null,
+                  child: Text(
+                    '${day.day}',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: day.isToday ? FontWeight.w700 : FontWeight.w500,
+                      color: day.isToday
+                          ? Colors.white
+                          : !inMonth
+                              ? AppColors.textTertiary
+                              // 周末红色；但调休补班的周末是「要上班的」，标红会自相矛盾
+                              : (day.isWeekend && holiday?.isWorkday != true)
+                                  ? AppColors.danger
+                                  : AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                // 日期数字 → 农历：2 → 1
+                const SizedBox(height: 1),
+                // 农历小标签（与休/班并存，始终显示）；限宽保证长标签不把格子横向撑大
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 40),
+                  child: Text(
+                    day.lunarLabel,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10,
+                      height: 1.0,
+                      color: !inMonth
+                          ? AppColors.textTertiary.withValues(alpha: 0.6)
+                          : (day.holiday != null ||
+                                  ['初一', '初二'].contains(day.lunarLabel))
+                              ? AppColors.primary
+                              : AppColors.textHint,
+                    ),
+                  ),
+                ),
               ],
-              // 公历日数字（今天渐变圆底）
-              Container(
-                width: 28,
-                height: 28,
-                alignment: Alignment.center,
-                decoration: day.isToday
-                    ? BoxDecoration(
-                        gradient: AppColors.primaryGradient,
-                        shape: BoxShape.circle,
-                      )
-                    : null,
-                child: Text(
-                  '${day.day}',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: day.isToday ? FontWeight.w700 : FontWeight.w500,
-                    color: day.isToday
-                        ? Colors.white
-                        : !inMonth
-                            ? AppColors.textTertiary
-                            // 周末红色；但调休补班的周末是「要上班的」，标红会自相矛盾
-                            : (day.isWeekend && holiday?.isWorkday != true)
-                                ? AppColors.danger
-                                : AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 2),
-              // 农历小标签（节气/节日显示主色，其他灰色）；有休/班时让位
-              if (!isArrangement)
-                Text(
-                  day.lunarLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 10,
-                    height: 1.0,
-                    color: !inMonth
-                        ? AppColors.textTertiary.withValues(alpha: 0.6)
-                        : (day.holiday != null ||
-                                ['初一', '初二'].contains(day.lunarLabel))
-                            ? AppColors.primary
-                            : AppColors.textHint,
-                  ),
-                ),
-            ],
+            ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   // ==================== 老黄历详情面板 ====================

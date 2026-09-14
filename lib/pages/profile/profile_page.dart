@@ -156,7 +156,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
           ),
           // 与渐变头部自然衔接：统一四 Tab 页布局，消除错位
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            // 左右 16 → 12：列表卡片更贴边，行内左右留白同步收窄（2026-09-14）
+            padding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
             child: Column(
                 children: [
                   // ---------------- 云端足迹统计（服务端 SQL 聚合，未登录自动隐藏） ----------------
@@ -177,7 +178,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                             trailing: favCount.whenOrNull(data: (c) => '$c'),
                             onTap: () => context.push('/profile/favorites'),
                           ),
-                          const Divider(height: 1, indent: 56),
+                          const Divider(height: 1, indent: 48, endIndent: 12),
                           _Tile(
                             Icons.route_outlined,
                             '我的轨迹',
@@ -185,7 +186,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                             trailing: '${records.length}',
                             onTap: () => context.push('/trip/trajectory'),
                           ),
-                          const Divider(height: 1, indent: 56),
+                          const Divider(height: 1, indent: 48, endIndent: 12),
                           _Tile(
                             Icons.note_alt_outlined,
                             '我的备忘',
@@ -193,7 +194,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                             trailing: '${memos.length}',
                             onTap: () => context.push('/trip/memo'),
                           ),
-                          const Divider(height: 1, indent: 56),
+                          const Divider(height: 1, indent: 48, endIndent: 12),
                           _SwitchTile(
                             Icons.notifications_outlined,
                             '天气提醒',
@@ -205,7 +206,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                               if (mounted) setState(() => _weatherNotif = v);
                             },
                           ),
-                          const Divider(height: 1, indent: 56),
+                          const Divider(height: 1, indent: 48, endIndent: 12),
                           _SwitchTile(
                             Icons.my_location_outlined,
                             '自动定位',
@@ -214,14 +215,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                             onChanged: (v) =>
                                 ref.read(autoLocateProvider.notifier).set(v),
                           ),
-                          const Divider(height: 1, indent: 56),
+                          const Divider(height: 1, indent: 48, endIndent: 12),
                           _Tile(
                             Icons.settings_outlined,
                             '设置',
                             '天气 / AI 接口配置',
                             onTap: () => context.push('/profile/settings'),
                           ),
-                          const Divider(height: 1, indent: 56),
+                          const Divider(height: 1, indent: 48, endIndent: 12),
                           _Tile(
                             Icons.info_outline,
                             '关于',
@@ -330,7 +331,8 @@ class _Tile extends StatelessWidget {
   Widget build(BuildContext context) => InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          // 左右 16 → 12：图标/箭头更靠近卡片边缘（与卡片外边距一起收窄）
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
           child: Row(
             children: [
               Icon(icon, size: 22, color: AppColors.primary),
@@ -377,7 +379,8 @@ class _SwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        // 左右 16 → 12：与普通列表项（_Tile）保持一致
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: Row(
           children: [
             Icon(icon, size: 22, color: AppColors.primary),

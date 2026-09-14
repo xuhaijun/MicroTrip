@@ -68,8 +68,8 @@ class _DiscoverPageState extends ConsumerState<DiscoverPage>
                       onMore: () => context.push('/scenery'),
                     ),
                   ),
-                  // 标题与「为你精选」卡片间距调大：12 → 18
-                  const SizedBox(height: 18),
+                  // 标题与「为你精选」卡片间距统一为 12，与「行程页·最近轨迹」一致（2026-09-14）
+                  const SizedBox(height: 12),
                   FadeSlideIn(
                     delay: 80,
                     child: _FeaturedScroller(city: city.name, mock: mock),
@@ -86,8 +86,8 @@ class _DiscoverPageState extends ConsumerState<DiscoverPage>
                     delay: 200,
                     child: SectionTitle(title: '分类'),
                   ),
-                  // 标题与分类卡片间距调小：8 → 4
-                  const SizedBox(height: 4),
+                  // 标题与分类卡片间距统一为 12，与「行程页·最近轨迹」一致（2026-09-14）
+                  const SizedBox(height: 12),
                   FadeSlideIn(
                     delay: 240,
                     child: _CategoryGrid(),
@@ -374,29 +374,30 @@ class _SmartRecommendState extends ConsumerState<_SmartRecommend> {
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: _generate,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(AppRadius.round),
-                  ),
-                  child: Row(
-                    children: [
-                      if (_loading)
-                        const SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white)),
-                      if (_loading) const SizedBox(width: 4),
-                      const Icon(Icons.refresh, color: Colors.white, size: 14),
-                      const SizedBox(width: 2),
-                      const Text('重生成',
-                          style: TextStyle(fontSize: 12, color: Colors.white)),
-                    ],
+              // 重生成按钮：原 GestureDetector 无点击反馈 → 改用 InkWell 提供水波纹；
+              // 按钮上的「加载转圈」与「刷新图标」功能重复，按需求去掉转圈，仅留刷新图标，
+              // 加载时禁用并降低透明度（2026-09-14）。
+              Opacity(
+                opacity: _loading ? 0.5 : 1.0,
+                child: InkWell(
+                  onTap: _loading ? null : _generate,
+                  borderRadius: BorderRadius.circular(AppRadius.round),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(AppRadius.round),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.refresh, color: Colors.white, size: 14),
+                        SizedBox(width: 4),
+                        Text('重生成',
+                            style:
+                                TextStyle(fontSize: 12, color: Colors.white)),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -542,6 +543,9 @@ class _CategoryGrid extends StatelessWidget {
           () => context.push('/oneday')),
     ];
     return GridView.builder(
+      // padding 显式置零：否则 GridView 会套用 MediaQuery.padding（状态栏 + 导航栏），
+      // 让「分类」标题与网格之间凭空多出约 46dp 空白（2026-09-14 实测修复）。
+      padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

@@ -8,7 +8,7 @@ import 'package:micro_trip/services/lunar_service.dart';
 /// 万年历日期格「休 / 班」标签回归测试（2026-09-10）。
 ///
 /// 需求：如果是法定假日或调班，日期格底部小标签显示休/班提示，
-/// 且优先级高于农历日期（同一位置只能放一个，休/班赢）。
+/// 阴历标签在底部**并存显示**（标签在上、农历在下，不互相让位）。
 ///
 /// 固定 initialDate=2026-09-25，该月数据：
 ///   09-19 国庆调休（班，周六）
@@ -30,7 +30,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('法定假期显示「休」，并让位掉农历标签', (tester) async {
+  testWidgets('法定假期显示「休」，且阴历并存显示', (tester) async {
     await pumpCalendar(tester);
 
     final lunar = LunarService.getLunarDayLabel(DateTime(2026, 9, 25));
@@ -38,11 +38,11 @@ void main() {
 
     expect(find.descendant(of: cell, matching: find.text('休')), findsOneWidget,
         reason: '09-25 中秋节应显示「休」标签');
-    expect(find.descendant(of: cell, matching: find.text(lunar)), findsNothing,
-        reason: '有「休」时农历标签应让位（优先级：休/班 > 农历）');
+    expect(find.descendant(of: cell, matching: find.text(lunar)), findsOneWidget,
+        reason: '有「休」时阴历标签仍并存显示（标签在上、农历在下）');
   });
 
-  testWidgets('调休补班显示「班」，并让位掉农历标签', (tester) async {
+  testWidgets('调休补班显示「班」，且阴历并存显示', (tester) async {
     await pumpCalendar(tester);
 
     final lunar = LunarService.getLunarDayLabel(DateTime(2026, 9, 19));
@@ -50,8 +50,8 @@ void main() {
 
     expect(find.descendant(of: cell, matching: find.text('班')), findsOneWidget,
         reason: '09-19 国庆调休应显示「班」标签');
-    expect(find.descendant(of: cell, matching: find.text(lunar)), findsNothing,
-        reason: '有「班」时农历标签应让位');
+    expect(find.descendant(of: cell, matching: find.text(lunar)), findsOneWidget,
+        reason: '有「班」时阴历标签仍并存显示');
   });
 
   testWidgets('普通日期仍显示农历标签，不出现休/班', (tester) async {
@@ -118,9 +118,39 @@ void main() {
     expect(badgeTop, lessThan(numberTop),
         reason: '「休」标签应显示在日期数字上方');
 
-    // 数字下方的农历标签应已让位（顶部标签 + 数字 + 无农历）
+    // 数字下方的阴历标签仍并存显示（顶部标签 + 数字 + 阴历）
     final cell = dayCell('25');
     final lunar = LunarService.getLunarDayLabel(DateTime(2026, 9, 25));
-    expect(find.descendant(of: cell, matching: find.text(lunar)), findsNothing);
+    expect(find.descendant(of: cell, matching: find.text(lunar)), findsOneWidget,
+        reason: '「休」标签下方仍显示阴历标签，两者并存');
+  });
+
+  /// 2026-09-14 修复：有「休/班」的格子比普通格子多一行标签，内容更高；
+  /// 在「内容居中」的格子里，多出来的高度会把整列内容顶偏，表现为**同一行日期数字高低不齐**
+  /// （真机量化：带标签行的数字低 20px）。
+  ///
+  /// 修法不是调间距，而是给标签套 `Visibility(maintainSize: true)`——
+  /// 无标签的格子也保留同样高度的空槽，两列内容高度一致 → 居中后数字同高。
+  /// 这个用例把「同一行日期数字必须同高」钉成契约，防止以后被改回条件渲染
+  /// （条件渲染观感上"少一个空盒子"，但会重新引回错位，肉眼还不容易发现）。
+  testWidgets('同一行内：有休/班与无休/班格子的日期数字纵向对齐', (tester) async {
+    await pumpCalendar(tester);
+
+    double numberTop(String dayText) => tester
+        .getTopLeft(find.descendant(
+          of: dayCell(dayText),
+          matching: find.text(dayText),
+        ))
+        .dy;
+
+    // 2026-09 网格（周日起始）：第 3 行 = 09-13(日) ~ 09-19(六)
+    //   09-19 是国庆调休补班 → 带「班」标签，09-13 是普通周日 → 无标签
+    expect(numberTop('13'), closeTo(numberTop('19'), 0.5),
+        reason: '同行内「有班」的格子不应把日期数字顶偏');
+
+    // 第 4 行 = 09-20(日) ~ 09-26(六)
+    //   09-25/26 是中秋节 → 带「休」标签，09-20 是普通周日 → 无标签
+    expect(numberTop('20'), closeTo(numberTop('25'), 0.5),
+        reason: '同行内「有休」的格子不应把日期数字顶偏');
   });
 }

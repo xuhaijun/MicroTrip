@@ -570,8 +570,8 @@ class _HomePageState extends ConsumerState<HomePage>
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary)),
-          // 标题与宫格间距：一缩再缩（12 → 6 → 2），标题紧贴功能区
-          const SizedBox(height: 2),
+          // 标题与宫格间距统一为 12，与「行程页·最近轨迹」标题栏到功能区间距一致（2026-09-14）
+          const SizedBox(height: 12),
           // 图标与格子高度按可用宽度/字号自适应：
           // 宽屏图标更大、窄屏自动收窄，且用 mainAxisExtent 直接给足内容高度，
           // 避免固定 childAspectRatio 在窄屏或大字号下把内容压到溢出。
@@ -583,6 +583,9 @@ class _HomePageState extends ConsumerState<HomePage>
               final labelHeight =
                   MediaQuery.textScalerOf(context).scale(12) * 1.5;
               return GridView.builder(
+                // padding 显式置零：否则 GridView 会套用 MediaQuery.padding（状态栏 + 导航栏），
+                // 让「快捷功能」标题与宫格之间凭空多出约 46dp 空白（2026-09-14 实测修复）。
+                padding: EdgeInsets.zero,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

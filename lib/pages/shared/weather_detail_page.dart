@@ -131,11 +131,23 @@ class _WeatherDetailPageState extends ConsumerState<WeatherDetailPage> {
                           const SectionTitle(title: '未来 24 小时'),
                           const SizedBox(height: AppSpacing.md),
                           AppCard(
+                            // 内边距只留上下 8（默认 16）：条目在轨道里垂直居中，
+                            // 收掉内边距即少上下各 8 的空白（2026-09-14）。
+                            padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.sm,
+                                horizontal: AppSpacing.md),
                             child: SizedBox(
-                              // 逐小时项为竖向 Column，含 emoji 图标（字号 22，实际行高偏高），
-                              // 96 在窄屏/真机字号下会被撑出 ~14px 溢出；抬到 120 留足余量。
-                              // 见 overflow_scan_test：weather_detail_page.dart:150 Column overflow 14px
-                              height: 120,
+                              // 逐小时项为竖向 Column：文字 12/16 + 图标 22 + 两处 8 间距，
+                              // 显式给每个 TextStyle 设 height:1.2 后内容实测 14.4+8+22+8+19.2 = 71.6 高。
+                              // 轨道 90：既留住呼吸感，又容得下系统大字体。
+                              // 原值 120 是「怕溢出」的过度保守值，会留出约 40 的上下空白。
+                              //
+                              // ⚠️ 不准把 90 再往下压：温度行「21°」按 fontSize 16 排版，
+                              // 在字宽偏大的字体下会超过 48 的槽宽**折成两行**（实测 46 高），
+                              // 整列变成 101 → 溢出 11px（2026-09-14 由 120 收到 90 时暴露）。
+                              // 现已用 maxLines/softWrap + FittedBox 双保险堵住折行，
+                              // 但改动高度前请先跑 test/weather_hourly_fit_test.dart。
+                              height: 90,
                               child: ListView.separated(
                                 scrollDirection: Axis.horizontal,
                                 itemCount: _hourly.length.clamp(0, 24),
@@ -149,29 +161,42 @@ class _WeatherDetailPageState extends ConsumerState<WeatherDetailPage> {
                                       : '${t?.hour.toString().padLeft(2, '0')}时';
                                   return SizedBox(
                                     width: 48,
-                                    child: Column(
-                                      // mainAxisSize.min：仅取内容高度，配合外层 120 高度居中，
-                                      // 彻底杜绝「内容略高于固定高度」导致的底部溢出。
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(label,
-                                            style: const TextStyle(
-                                                fontSize: 12,
-                                                color: AppColors.textHint)),
-                                        const SizedBox(height: 8),
-                                        // 天气图标：与实时卡/10 天预报同一映射源
-                                        Icon(weatherIconOf(h.icon),
-                                            size: 22,
-                                            color: AppColors.primary),
-                                        const SizedBox(height: 8),
-                                        Text('${h.temp}°',
-                                            style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.textPrimary)),
-                                      ],
+                                    // FittedBox 仅作兜底：极端字体缩放时等比缩小，
+                                    // 避免固定高度轨道溢出（与 10 天预报 _dayCard 同一策略）；
+                                    // 正常缩放下 scale=1，原样显示，不影响观感。
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Column(
+                                        // mainAxisSize.min：仅取内容高度，配合轨道高度居中
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(label,
+                                              // 折行会把整列顶高、撑爆固定轨道；高度还必须显式写死，
+                                              // 否则中文默认行高约 1.42 会让估算失真。
+                                              maxLines: 1,
+                                              style: const TextStyle(
+                                                  fontSize: 12,
+                                                  height: 1.2,
+                                                  color: AppColors.textHint)),
+                                          const SizedBox(height: 8),
+                                          // 天气图标：与实时卡/10 天预报同一映射源
+                                          Icon(weatherIconOf(h.icon),
+                                              size: 22,
+                                              color: AppColors.primary),
+                                          const SizedBox(height: 8),
+                                          Text('${h.temp}°',
+                                              // 「21°」在 48 宽的槽里只差 1px，必须禁止折行
+                                              maxLines: 1,
+                                              softWrap: false,
+                                              style: const TextStyle(
+                                                  fontSize: 16,
+                                                  height: 1.2,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppColors.textPrimary)),
+                                        ],
+                                      ),
                                     ),
                                   );
                                 },
@@ -193,7 +218,9 @@ class _WeatherDetailPageState extends ConsumerState<WeatherDetailPage> {
                         const SectionTitle(title: '10 天预报'),
                         const SizedBox(height: AppSpacing.md),
                         SizedBox(
-                          height: 180,
+                          // 180 → 132：卡片内边距收到 8 后内容实测约 103 高，
+                          // 轨道跟着收紧，上下空白从约 36 压到约 15（2026-09-14）。
+                          height: 132,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             itemCount: weather.daily.take(10).length,
@@ -251,23 +278,28 @@ class _WeatherDetailPageState extends ConsumerState<WeatherDetailPage> {
     return SizedBox(
       width: 88,
       child: AppCard(
+        // 上下内边距 12 → 8：卡片内容本来就在轨道里居中，收掉内边距即少上下各 4 的空白
         padding:
-            const EdgeInsets.symmetric(vertical: 12, horizontal: AppSpacing.sm),
+            const EdgeInsets.symmetric(vertical: AppSpacing.sm, horizontal: 6),
         // AppCard 内层 Container 无 alignment，子内容会落在卡片左侧；
         // 用 Align 把整列在 88 宽卡片内水平+垂直居中，避免"内容偏左未居中"。
         child: Align(
           alignment: Alignment.center,
-          child: Column(
+          // FittedBox 仅作兜底：系统字体放大到极端值时等比缩小，避免固定高度轨道溢出；
+          // 正常缩放下 scale=1，原样显示，不影响观感。
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(label,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                       fontSize: 12, color: AppColors.textSecondary)),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Icon(weatherIconOf(d.iconDay),
                   size: 26, color: AppColors.primary),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text('${d.tempMax}°',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
@@ -278,13 +310,14 @@ class _WeatherDetailPageState extends ConsumerState<WeatherDetailPage> {
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                       fontSize: 13, color: AppColors.textHint)),
-              const SizedBox(height: 6),
+              const SizedBox(height: 5),
               Text(d.textDay,
                   maxLines: 1,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                       fontSize: 11, color: AppColors.textSecondary)),
             ],
+            ),
           ),
         ),
       ),

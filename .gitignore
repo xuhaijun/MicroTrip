@@ -55,3 +55,7 @@ lib/core/config/secrets.dart
 
 # 构建 / 分析产物
 analyze_out.txt
+
+# 本地备份 / 走查截图 / 一次性补丁脚本（含业务数据与本地证据，不入库）
+/backups/
+/exports/

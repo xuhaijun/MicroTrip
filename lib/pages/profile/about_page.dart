@@ -81,12 +81,16 @@ class AboutPage extends StatelessWidget {
                         const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
                     child: Column(
                       children: [
+                        // 分隔线规则（2026-09-14 统一）：左右都要留白，并与行内文字对齐。
+                        // 本卡标签文字从内容区左边缘起（行内无前置图标）→ indent/endIndent 都为 0，
+                        // 线条正好落在卡片左右 16 内边距内，左右对称；与「设置」页观感一致。
+                        // 旧值 indent: 56 且无 endIndent → 左边空 56、右边顶到卡片边缘，所以显得难看。
                         _row('项目', '微旅途 MicroTrip（Flutter 版）'),
-                        const Divider(height: 1, indent: 56),
+                        const Divider(height: 1),
                         _row('技术栈', 'Flutter · Riverpod · go_router · dio'),
-                        const Divider(height: 1, indent: 56),
+                        const Divider(height: 1),
                         _row('天气数据', '和风天气 QWeather'),
-                        const Divider(height: 1, indent: 56),
+                        const Divider(height: 1),
                         _row('智能助手', '小途（OpenAI 兼容大模型）'),
                       ],
                     ),
@@ -142,7 +146,10 @@ class AboutPage extends StatelessWidget {
                               color: AppColors.textHint),
                           onTap: () => context.push('/user-agreement'),
                         ),
-                        const Divider(height: 1, indent: 48),
+                        // indent 56 = 标题文字起点（实测屏幕 x=72，减卡片左边缘 16）：
+                        // ListTile 的 leading 被 minLeadingWidth(40) 撑宽，再加 horizontalTitleGap(16)，
+                        // 即 contentPadding(16) + 40 + 16 = 72；endIndent 16 与标题右侧内边距对齐。
+                        const Divider(height: 1, indent: 56, endIndent: 16),
                         ListTile(
                           contentPadding:
                               const EdgeInsets.symmetric(horizontal: 16, vertical: 2),

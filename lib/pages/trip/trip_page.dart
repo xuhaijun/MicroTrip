@@ -219,6 +219,9 @@ class _TripPageState extends ConsumerState<TripPage>
       ),
     ];
     return GridView.builder(
+      // padding 显式置零：嵌套非滚动网格默认会套用 MediaQuery.padding（状态栏 + 导航栏），
+      // 凭空多出大段空白（2026-09-14 统一修复，与首页/发现页/日历保持一致）。
+      padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

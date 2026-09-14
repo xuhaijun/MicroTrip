@@ -130,23 +130,8 @@ class _SplashPageState extends State<SplashPage> {
                 curve: Curves.elasticOut,
                 builder: (_, scale, child) => Transform.scale(
                   scale: scale,
-                  child: Container(
-                    width: 96,
-                    height: 96,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.15),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: const Text('🧳', style: TextStyle(fontSize: 52)),
-                  ),
+                  // 去掉白色圆形底（与整体渐变大背景不协调），Logo 直接浮在渐变上
+                  child: const Text('🧳', style: TextStyle(fontSize: 76)),
                 ),
               ),
               const SizedBox(height: 22),

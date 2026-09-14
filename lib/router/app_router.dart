@@ -48,19 +48,25 @@ final appRouter = GoRouter(
       builder: (context, state, navigationShell) =>
           AppShell(navigationShell: navigationShell),
       branches: [
-        StatefulShellBranch(routes: [
+        StatefulShellBranch(
+          navigatorKey: shellBranchNavigatorKeys[0],
+          routes: [
           GoRoute(
             path: '/home',
             builder: (context, state) => const HomePage(),
           ),
         ]),
-        StatefulShellBranch(routes: [
+        StatefulShellBranch(
+          navigatorKey: shellBranchNavigatorKeys[1],
+          routes: [
           GoRoute(
             path: '/discover',
             builder: (context, state) => const DiscoverPage(),
           ),
         ]),
-        StatefulShellBranch(routes: [
+        StatefulShellBranch(
+          navigatorKey: shellBranchNavigatorKeys[2],
+          routes: [
           GoRoute(
             path: '/trip',
             builder: (context, state) => const TripPage(),
@@ -87,7 +93,9 @@ final appRouter = GoRouter(
             ],
           ),
         ]),
-        StatefulShellBranch(routes: [
+        StatefulShellBranch(
+          navigatorKey: shellBranchNavigatorKeys[3],
+          routes: [
           GoRoute(
             path: '/profile',
             builder: (context, state) => const ProfilePage(),
