@@ -35,7 +35,7 @@ void main() {
                 : null,
           ),
         ),
-        cloudStatsProvider.overrideWith((ref) => stats()),
+        cloudStatsProvider.overrideWith(() => _FakeStatsNotifier(stats)),
       ],
     );
   }
@@ -132,6 +132,49 @@ void main() {
 
     expect(find.textContaining('比本地少 4 条'), findsOneWidget);
     expect(find.textContaining('未同步'), findsOneWidget);
+  });
+
+  // ---------------- 1.5 刷新按钮（修复点） ----------------
+
+  testWidgets('正常态：点击刷新按钮进入 loading 并重新拉取', (tester) async {
+    var fetchCount = 0;
+    CloudStats stats() {
+      fetchCount++;
+      return sample();
+    }
+
+    final container = ProviderContainer(
+      overrides: [
+        authProvider.overrideWith(
+          () => _FakeAuthNotifier(
+            const UserProfile(
+              id: 'u1', nickname: '测试用户', phone: '13800001111',
+              loginType: 'server',
+            ),
+          ),
+        ),
+        cloudStatsProvider.overrideWith(
+          () => _FakeStatsNotifier(() async {
+            // 用一点延迟模拟真实网络，确保 loading 态跨帧可见（否则微任务瞬间完成抓不到）
+            await Future.delayed(const Duration(milliseconds: 50));
+            return stats();
+          }),
+        ),
+      ],
+    );
+    await pumpCard(tester, container);
+    await tester.pumpAndSettle();
+    expect(fetchCount, 1, reason: '初始只拉一次');
+
+    // 点刷新图标（用户反馈的「刷新按钮点了没反应」）
+    await tester.tap(find.byIcon(Icons.refresh));
+    // 点击后立即进入 loading（骨架 spinner 出现）—— 保证可见反馈
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsOneWidget,
+        reason: '刷新应立即可见 loading 反馈');
+    await tester.pumpAndSettle();
+    expect(fetchCount, 2, reason: '刷新按钮必须触发二次拉取');
+    expect(find.text('云端足迹'), findsOneWidget);
   });
 
   // ---------------- 2. 未登录 ----------------
@@ -255,4 +298,26 @@ class _FakeAuthNotifier extends AuthNotifier {
 
   @override
   AuthState build() => AuthState(user: _user);
+}
+
+/// 假 CloudStatsNotifier：用注入的 [stats] 工厂提供数据，build / refresh 都走它，
+/// 不触碰真实 SyncService。refresh 复刻真实现实的「先置 loading 再重拉」语义，
+/// 以便测试卡片刷新按钮的可见反馈与二次拉取。
+class _FakeStatsNotifier extends CloudStatsNotifier {
+  _FakeStatsNotifier(this._stats, [this.onFetch]);
+  final Future<CloudStats> Function() _stats;
+  final void Function()? onFetch;
+
+  @override
+  Future<CloudStats> build() {
+    onFetch?.call();
+    return _stats();
+  }
+
+  @override
+  Future<void> refresh() async {
+    onFetch?.call();
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(_stats);
+  }
 }

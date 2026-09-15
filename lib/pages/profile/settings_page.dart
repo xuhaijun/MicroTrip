@@ -177,7 +177,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         Navigator.of(context, rootNavigator: true).pop(); // 关闭进度框
         setState(() {}); // 刷新上次同步时间
         // 云端条数/里程已变化，「我的」页的云端足迹卡片需重新拉取统计
-        ref.invalidate(cloudStatsProvider);
+        ref.read(cloudStatsProvider.notifier).refresh();
         _showSnack(result.total == 0
             ? '暂无本地轨迹可同步'
             : result.failed == 0

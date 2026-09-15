@@ -145,7 +145,7 @@ class _CloudTrajectoryPageState extends ConsumerState<CloudTrajectoryPage> {
       if (mounted) {
         setState(() => _items.removeWhere((e) => e.id == item.id));
         // 契约：统计由服务端聚合，客户端无法本地推算，必须重拉
-        ref.invalidate(cloudStatsProvider);
+        ref.read(cloudStatsProvider.notifier).refresh();
         _showSnack('已删除云端轨迹');
       }
     } catch (e) {

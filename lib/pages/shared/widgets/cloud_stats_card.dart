@@ -44,14 +44,14 @@ class CloudStatsCard extends ConsumerWidget {
           loading: () => const _StatsSkeleton(),
           error: (e, _) => _StatsError(
             message: _shortMessage(e),
-            onRetry: () => ref.invalidate(cloudStatsProvider),
+            onRetry: () => ref.read(cloudStatsProvider.notifier).refresh(),
           ),
           data: (stats) => stats.isEmpty
-              ? _StatsEmpty(ctx: context, onRetry: () => ref.invalidate(cloudStatsProvider))
+              ? _StatsEmpty(ctx: context, onRetry: () => ref.read(cloudStatsProvider.notifier).refresh())
               : _StatsBody(
                   stats: stats,
                   localRecordCount: localRecordCount,
-                  onRefresh: () => ref.invalidate(cloudStatsProvider),
+                  onRefresh: () => ref.read(cloudStatsProvider.notifier).refresh(),
                 ),
         ),
       ),
@@ -106,14 +106,17 @@ class _StatsBody extends StatelessWidget {
             const Spacer(),
             Text(stats.lastSyncedText,
                 style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
+            // 右上角刷新按钮：清晰留白 + 足够点按区域，避免与「上次同步」文字挤在一起
             InkWell(
               onTap: onRefresh,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
+              splashColor: AppColors.primary.withValues(alpha: 0.12),
+              highlightColor: AppColors.primary.withValues(alpha: 0.08),
               child: const Padding(
-                padding: EdgeInsets.all(4),
+                padding: EdgeInsets.all(8),
                 child: Icon(Icons.refresh,
-                    size: 16, color: AppColors.textTertiary),
+                    size: 18, color: AppColors.textSecondary),
               ),
             ),
           ],

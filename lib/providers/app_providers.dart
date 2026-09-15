@@ -378,20 +378,42 @@ final trajectoryDetailProvider =
 /// 云端轨迹汇总统计（「我的」页「云端足迹」卡片）。
 ///
 /// 几个刻意的设计选择：
-///  - **watch authProvider**：登录/退出后自动重取，不需要页面手动 invalidate。
+///  - **watch authProvider**：登录/退出后自动重取，不需要页面手动刷新。
 ///    退出登录时 [SyncService.isConfigured] 变 false，直接返回空统计而非抛错，
 ///    避免"退出登录瞬间卡片闪一下红色错误"。
 ///  - **不自动重试**：统计失败不阻塞页面其他部分，由用户在卡片上手动点重试。
 ///  - 返回 [CloudStats.empty] 而非抛错来表达"没有数据"，
 ///    只有真正的网络/鉴权失败才走 error 分支。
-final cloudStatsProvider = FutureProvider<CloudStats>((ref) async {
-  // 依赖登录态：token 变化（登录/退出/切换账号）后自动重新拉取
-  final auth = ref.watch(authProvider);
-  if (!auth.isLoggedIn || !SyncService.isConfigured) {
-    return CloudStats.empty;
+///  - **刷新走 [CloudStatsNotifier.refresh]**（不是 `ref.invalidate`）：该 provider 是
+///    常驻顶层 FutureProvider，`ref.invalidate` 实测不会触发重算（已用测试实证），
+///    会导致"点刷新按钮没反应"。notifier.refresh 先置 loading 再重拉，保证可见反馈。
+class CloudStatsNotifier extends AsyncNotifier<CloudStats> {
+  @override
+  Future<CloudStats> build() => _fetch();
+
+  Future<CloudStats> _fetch() async {
+    // 依赖登录态：token 变化（登录/退出/切换账号）后自动重新拉取
+    final auth = ref.watch(authProvider);
+    if (!auth.isLoggedIn || !SyncService.isConfigured) {
+      return CloudStats.empty;
+    }
+    return SyncService.fetchStats();
   }
-  return SyncService.fetchStats();
-});
+
+  /// 卡片「刷新 / 重试」按钮调用：显式重拉，并立即置 loading 给出可见反馈。
+  Future<void> refresh() async {
+    final auth = ref.read(authProvider);
+    if (!auth.isLoggedIn || !SyncService.isConfigured) {
+      state = AsyncValue.data(CloudStats.empty);
+      return;
+    }
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(_fetch);
+  }
+}
+
+final cloudStatsProvider =
+    AsyncNotifierProvider<CloudStatsNotifier, CloudStats>(CloudStatsNotifier.new);
 
 // ==================== 步数 ====================
 
