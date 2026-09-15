@@ -1,18 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 品牌渐变背景：科技蓝 (#0077B6) → 浅湖蓝 (#00B4D8)，与 App 主题 primaryGradient 一致 -->
     <item>
-        <shape android:shape="rectangle">
-            <gradient
-                android:startColor="#0077B6"
-                android:endColor="#00B4D8"
-                android:angle="135" />
-        </shape>
+        <bitmap android:gravity="fill" android:src="@drawable/background"/>
     </item>
-    <!-- 居中品牌图标（PNG 已按 40% 重出：mdpi 102/hdpi 153/xhdpi 204/xxhdpi 306/xxxhdpi 408px） -->
     <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@drawable/splash" />
+        <bitmap android:gravity="center" android:src="@drawable/splash"/>
+    </item>
+    <item android:bottom="0dp">
+        <bitmap android:gravity="bottom" android:src="@drawable/branding"/>
     </item>
 </layer-list>

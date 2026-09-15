@@ -83,9 +83,14 @@ flutter_native_splash:
   # 居中 Logo（复用 launcher 前景图）
   image: "assets/images/logo.png"
   image_dark: "assets/images/logo.png"
-  # Android 12+ 的 Splash API（icon 模式）同样套用 Logo
+  # 原生闪屏品牌名（Logo 正下方的「微旅途」）：flutter_native_splash 2.x 不支持
+  # title 文本参数，故用 branding 图片承载，且 Android 12+ 的 Splash API 也会显示。
+  branding: "assets/images/splash_branding.png"
+  branding_dark: "assets/images/splash_branding.png"
+  # Android 12+ 的 Splash API（icon 模式）同样套用 Logo + branding
   android_12:
     image: "assets/images/logo.png"
+    branding: "assets/images/splash_branding.png"
     color: "#4FC3F7"
     color_dark: "#0288D1"
   android: true

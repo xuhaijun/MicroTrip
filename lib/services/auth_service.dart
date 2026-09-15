@@ -83,6 +83,10 @@ class AuthService {
   static String get serverUrl {
     final raw = AppStorage.getObject(kAuthConfig);
     final url = raw is Map ? (raw['serverUrl']?.toString() ?? '') : '';
+    // 只保持用户输入（去尾斜杠），不做任何环境相关的默认值兜底：
+    // 后端地址改由用户在「设置 → 账号与后端服务」显式填写并「测试连接」。
+    // （曾一度在 debug 下默认 10.0.2.2:3000，但该地址只对标准 AVD 有效，
+    //  对 Wi-Fi 桥接型模拟器无效，且会让本地账号误判为「已配置后端」而报错，故移除。）
     return url.trim().replaceAll(RegExp(r'/+$'), '');
   }
 

@@ -38,9 +38,15 @@ class SyncService {
 
   // ==================== 状态查询 ====================
 
-  /// 是否可同步：已配置后端地址 && 已登录（两者缺一不可）
+  /// 是否可同步：已配置后端地址 && 已登录 && 且必须是**云端账号**（loginType == 'server'）。
+  ///
+  /// 为什么要卡 `loginType`：本地演示账号（体验用户）虽然 `isLoggedIn` 为 true，
+  /// 但它没有服务端凭据，请求云端接口必然鉴权失败。若不卡这一层，
+  /// 「我的」页云端足迹卡片会在本地账号下被判定为「已配置」而弹出「获取失败」。
   static bool get isConfigured =>
-      AuthService.serverUrl.isNotEmpty && AuthService.isLoggedIn;
+      AuthService.serverUrl.isNotEmpty &&
+      AuthService.isLoggedIn &&
+      AuthService.currentUser?.loginType == 'server';
 
   /// 上次同步时间描述（"从未同步" / "今天 10:05" / "8/19 10:05"）
   static String get lastSyncAtText {

@@ -401,14 +401,26 @@ class CloudStatsNotifier extends AsyncNotifier<CloudStats> {
   }
 
   /// 卡片「刷新 / 重试」按钮调用：显式重拉，并立即置 loading 给出可见反馈。
+  ///
+  /// 强制最短可见 loading 时长（[_kMinRefreshLoading]），让「无后端 / 接口极快返回」
+  /// 时空态刷新也能看到明显的刷新反馈，而不是"点一下毫无反应"。
+  static const _kMinRefreshLoading = Duration(milliseconds: 600);
+
   Future<void> refresh() async {
-    final auth = ref.read(authProvider);
-    if (!auth.isLoggedIn || !SyncService.isConfigured) {
-      state = AsyncValue.data(CloudStats.empty);
-      return;
-    }
+    final sw = Stopwatch()..start();
     state = const AsyncLoading();
-    state = await AsyncValue.guard(_fetch);
+    final auth = ref.read(authProvider);
+    final AsyncValue<CloudStats> result;
+    if (!auth.isLoggedIn || !SyncService.isConfigured) {
+      result = AsyncValue.data(CloudStats.empty);
+    } else {
+      result = await AsyncValue.guard(_fetch);
+    }
+    final elapsed = sw.elapsed;
+    if (elapsed < _kMinRefreshLoading) {
+      await Future.delayed(_kMinRefreshLoading - elapsed);
+    }
+    state = result;
   }
 }
 

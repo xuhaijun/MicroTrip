@@ -8,6 +8,18 @@ import '../../../providers/app_providers.dart';
 import '../../../providers/auth_provider.dart';
 import 'common_widgets.dart';
 
+/// 刷新云端足迹并给出 Toast 反馈（成功「已刷新」/ 失败「刷新失败」）。
+/// 抽出为顶层函数，供正常态与空态的刷新入口共用，保证反馈一致。
+Future<void> _refreshCloudStats(BuildContext context, WidgetRef ref) async {
+  await ref.read(cloudStatsProvider.notifier).refresh();
+  if (!context.mounted) return;
+  final state = ref.read(cloudStatsProvider);
+  final msg = state.hasError ? '刷新失败，请检查网络或后端' : '已刷新';
+  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+    SnackBar(content: Text(msg), duration: const Duration(seconds: 1)),
+  );
+}
+
 /// ============================================================
 /// 「云端足迹」统计卡片（用于「我的」页）
 ///
@@ -44,15 +56,16 @@ class CloudStatsCard extends ConsumerWidget {
           loading: () => const _StatsSkeleton(),
           error: (e, _) => _StatsError(
             message: _shortMessage(e),
-            onRetry: () => ref.read(cloudStatsProvider.notifier).refresh(),
+            // 走统一的刷新入口：失败/成功都给出 Toast 反馈
+            onRetry: () => _refreshCloudStats(context, ref),
           ),
           data: (stats) => stats.isEmpty
-              ? _StatsEmpty(
-                  onRetry: () => ref.read(cloudStatsProvider.notifier).refresh())
+              // 空态刷新同样走统一入口，保证「最小 loading + 已刷新 Toast」在空态也生效
+              ? _StatsEmpty(onRetry: () => _refreshCloudStats(context, ref))
               : _StatsBody(
                   stats: stats,
                   localRecordCount: localRecordCount,
-                  onRefresh: () => ref.read(cloudStatsProvider.notifier).refresh(),
+                  onRefresh: () => _refreshCloudStats(context, ref),
                 ),
         ),
       ),

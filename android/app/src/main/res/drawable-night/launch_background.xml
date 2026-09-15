@@ -1,18 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 夜间深蓝渐变背景：深蓝灰 (#0A192F) → 暗湖蓝 (#0D3B4C) -->
     <item>
-        <shape android:shape="rectangle">
-            <gradient
-                android:startColor="#0A192F"
-                android:endColor="#0D3B4C"
-                android:angle="135" />
-        </shape>
+        <bitmap android:gravity="fill" android:src="@drawable/background"/>
     </item>
-    <!-- 居中品牌图标（PNG 已按 40% 重出：mdpi 102/hdpi 153/xhdpi 204/xxhdpi 306/xxxhdpi 408px） -->
     <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@drawable/splash" />
+        <bitmap android:gravity="center" android:src="@drawable/splash"/>
+    </item>
+    <item android:bottom="0dp">
+        <bitmap android:gravity="bottom" android:src="@drawable/branding"/>
     </item>
 </layer-list>
