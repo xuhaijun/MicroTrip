@@ -47,7 +47,8 @@ class CloudStatsCard extends ConsumerWidget {
             onRetry: () => ref.read(cloudStatsProvider.notifier).refresh(),
           ),
           data: (stats) => stats.isEmpty
-              ? _StatsEmpty(ctx: context, onRetry: () => ref.read(cloudStatsProvider.notifier).refresh())
+              ? _StatsEmpty(
+                  onRetry: () => ref.read(cloudStatsProvider.notifier).refresh())
               : _StatsBody(
                   stats: stats,
                   localRecordCount: localRecordCount,
@@ -72,6 +73,28 @@ class CloudStatsCard extends ConsumerWidget {
     final clean = s.contains(': ') ? s.split(': ').last : s;
     return clean.length > 40 ? '${clean.substring(0, 40)}…' : clean;
   }
+}
+
+/// 卡片右上角的刷新按钮。
+///
+/// 正常态与空态共用同一实现，保证「刷新」永远出现在标题行最右端（右上角），
+/// 位置、点按热区、水波反馈完全一致，不随卡片状态漂移。
+class _CornerRefresh extends StatelessWidget {
+  const _CornerRefresh({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        splashColor: AppColors.primary.withValues(alpha: 0.12),
+        highlightColor: AppColors.primary.withValues(alpha: 0.08),
+        child: const Padding(
+          padding: EdgeInsets.all(8),
+          child: Icon(Icons.refresh, size: 18, color: AppColors.textSecondary),
+        ),
+      );
 }
 
 /// ---------------- 正常态 ----------------
@@ -107,18 +130,7 @@ class _StatsBody extends StatelessWidget {
             Text(stats.lastSyncedText,
                 style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
             const SizedBox(width: 6),
-            // 右上角刷新按钮：清晰留白 + 足够点按区域，避免与「上次同步」文字挤在一起
-            InkWell(
-              onTap: onRefresh,
-              borderRadius: BorderRadius.circular(16),
-              splashColor: AppColors.primary.withValues(alpha: 0.12),
-              highlightColor: AppColors.primary.withValues(alpha: 0.08),
-              child: const Padding(
-                padding: EdgeInsets.all(8),
-                child: Icon(Icons.refresh,
-                    size: 18, color: AppColors.textSecondary),
-              ),
-            ),
+            _CornerRefresh(onTap: onRefresh),
           ],
         ),
         const SizedBox(height: 10),
@@ -281,8 +293,7 @@ class _StatsSkeleton extends StatelessWidget {
 /// ---------------- 空态 ----------------
 
 class _StatsEmpty extends StatelessWidget {
-  const _StatsEmpty({required this.ctx, required this.onRetry});
-  final BuildContext ctx;
+  const _StatsEmpty({required this.onRetry});
   final VoidCallback onRetry;
 
   @override
@@ -290,14 +301,18 @@ class _StatsEmpty extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.cloud_outlined, size: 18, color: AppColors.textTertiary),
-              SizedBox(width: 6),
-              Text('云端足迹',
+            children: [
+              const Icon(Icons.cloud_outlined,
+                  size: 18, color: AppColors.textTertiary),
+              const SizedBox(width: 6),
+              const Text('云端足迹',
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary)),
+              const Spacer(),
+              // 刷新入口固定在标题行右上角（与正常态同一组件），不再放卡片左下角
+              _CornerRefresh(onTap: onRetry),
             ],
           ),
           const SizedBox(height: 12),
@@ -306,20 +321,6 @@ class _StatsEmpty extends StatelessWidget {
           const SizedBox(height: 4),
           const Text('到「设置 → 云端同步」把本地轨迹同步上去',
               style: TextStyle(fontSize: 11, color: AppColors.textHint)),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: onRetry,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                minimumSize: const Size(0, 32),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              icon: const Icon(Icons.refresh, size: 15),
-              label: const Text('刷新', style: TextStyle(fontSize: 12)),
-            ),
-          ),
         ],
       );
 }

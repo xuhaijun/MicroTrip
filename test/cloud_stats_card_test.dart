@@ -194,16 +194,58 @@ void main() {
 
   // ---------------- 3. 空数据 ----------------
 
-  testWidgets('无数据：给出引导文案与刷新入口', (tester) async {
+  testWidgets('无数据：引导文案 + 刷新入口在卡片右上角', (tester) async {
     await pumpCard(tester, containerWith(stats: () async => CloudStats.empty));
     await tester.pumpAndSettle();
 
     expect(find.text('云端足迹'), findsOneWidget);
     expect(find.text('云端还没有出行记录'), findsOneWidget);
     expect(find.textContaining('云端同步'), findsOneWidget);
-    expect(find.text('刷新'), findsOneWidget);
     // 空态不应出现主指标大数字
     expect(find.text('km'), findsNothing);
+
+    // 刷新入口 = 标题行最右端的刷新图标，且必须落在卡片右上角（不是左下角）
+    expect(find.byIcon(Icons.refresh), findsOneWidget);
+    final cardRect = tester.getRect(find.byType(CloudStatsCard));
+    final refreshRect = tester.getRect(find.byIcon(Icons.refresh));
+    expect(refreshRect.center.dx, greaterThan(cardRect.center.dx),
+        reason: '刷新入口应在卡片右半侧');
+    expect(refreshRect.center.dy, lessThan(cardRect.center.dy),
+        reason: '刷新入口应在卡片上半侧（右上角）');
+  });
+
+  testWidgets('空态：点击右上角刷新会重新拉取（可见 loading 反馈）', (tester) async {
+    var fetchCount = 0;
+    final container = ProviderContainer(
+      overrides: [
+        authProvider.overrideWith(
+          () => _FakeAuthNotifier(
+            const UserProfile(
+              id: 'u1', nickname: '测试用户', phone: '13800001111',
+              loginType: 'server',
+            ),
+          ),
+        ),
+        cloudStatsProvider.overrideWith(
+          () => _FakeStatsNotifier(() async {
+            // 模拟真实网络延迟，确保 loading 态跨帧可见
+            await Future.delayed(const Duration(milliseconds: 50));
+            fetchCount++;
+            return CloudStats.empty;
+          }),
+        ),
+      ],
+    );
+    await pumpCard(tester, container);
+    await tester.pumpAndSettle();
+    expect(fetchCount, 1, reason: '初始只拉一次');
+
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsOneWidget,
+        reason: '空态刷新应立即可见 loading 反馈');
+    await tester.pumpAndSettle();
+    expect(fetchCount, 2, reason: '空态刷新也必须触发二次拉取');
   });
 
   // ---------------- 4. 错误态 ----------------
@@ -304,19 +346,14 @@ class _FakeAuthNotifier extends AuthNotifier {
 /// 不触碰真实 SyncService。refresh 复刻真实现实的「先置 loading 再重拉」语义，
 /// 以便测试卡片刷新按钮的可见反馈与二次拉取。
 class _FakeStatsNotifier extends CloudStatsNotifier {
-  _FakeStatsNotifier(this._stats, [this.onFetch]);
+  _FakeStatsNotifier(this._stats);
   final Future<CloudStats> Function() _stats;
-  final void Function()? onFetch;
 
   @override
-  Future<CloudStats> build() {
-    onFetch?.call();
-    return _stats();
-  }
+  Future<CloudStats> build() => _stats();
 
   @override
   Future<void> refresh() async {
-    onFetch?.call();
     state = const AsyncLoading();
     state = await AsyncValue.guard(_stats);
   }
