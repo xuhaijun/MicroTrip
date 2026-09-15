@@ -106,11 +106,17 @@ class HolidayData {
     '2025-10-08': (type: 'holiday', name: '国庆节'),
     '2025-10-11': (type: 'workday', name: '国庆调休'),
     // ---- 2026 年 ----
+    // 以下逐条对照《国务院办公厅关于2026年部分节假日安排的通知》(2025-11-04，人民日报/新华网刊发)：
+    // 元旦 1/1-3 放假，1/4(日)上班；春节 2/15-23 放假(9天)，2/14(六)、2/28(六)上班；
+    // 清明 4/4-6 放假；劳动 5/1-5 放假，5/9(六)上班；端午 6/19-21 放假；
+    // 中秋 9/25-27 放假；国庆 10/1-7 放假(7天)，9/20(日)、10/10(六)上班。
     '2026-01-01': (type: 'holiday', name: '元旦'),
     '2026-01-02': (type: 'holiday', name: '元旦'),
     '2026-01-03': (type: 'holiday', name: '元旦'),
-    '2026-02-15': (type: 'workday', name: '春节调休'),
-    '2026-02-16': (type: 'workday', name: '春节调休'),
+    '2026-01-04': (type: 'workday', name: '元旦调休'),
+    '2026-02-14': (type: 'workday', name: '春节调休'),
+    '2026-02-15': (type: 'holiday', name: '春节'),
+    '2026-02-16': (type: 'holiday', name: '春节'),
     '2026-02-17': (type: 'holiday', name: '春节'),
     '2026-02-18': (type: 'holiday', name: '春节'),
     '2026-02-19': (type: 'holiday', name: '春节'),
@@ -122,16 +128,16 @@ class HolidayData {
     '2026-04-04': (type: 'holiday', name: '清明节'),
     '2026-04-05': (type: 'holiday', name: '清明节'),
     '2026-04-06': (type: 'holiday', name: '清明节'),
-    '2026-04-26': (type: 'workday', name: '劳动节调休'),
     '2026-05-01': (type: 'holiday', name: '劳动节'),
     '2026-05-02': (type: 'holiday', name: '劳动节'),
     '2026-05-03': (type: 'holiday', name: '劳动节'),
     '2026-05-04': (type: 'holiday', name: '劳动节'),
     '2026-05-05': (type: 'holiday', name: '劳动节'),
+    '2026-05-09': (type: 'workday', name: '劳动节调休'),
     '2026-06-19': (type: 'holiday', name: '端午节'),
     '2026-06-20': (type: 'holiday', name: '端午节'),
     '2026-06-21': (type: 'holiday', name: '端午节'),
-    '2026-09-19': (type: 'workday', name: '国庆调休'),
+    '2026-09-20': (type: 'workday', name: '国庆调休'),
     '2026-09-25': (type: 'holiday', name: '中秋节'),
     '2026-09-26': (type: 'holiday', name: '中秋节'),
     '2026-09-27': (type: 'holiday', name: '中秋节'),
@@ -142,7 +148,6 @@ class HolidayData {
     '2026-10-05': (type: 'holiday', name: '国庆节'),
     '2026-10-06': (type: 'holiday', name: '国庆节'),
     '2026-10-07': (type: 'holiday', name: '国庆节'),
-    '2026-10-08': (type: 'holiday', name: '国庆节'),
     '2026-10-10': (type: 'workday', name: '国庆调休'),
   };
 

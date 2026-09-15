@@ -387,16 +387,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       _field(_authServer, '后端服务地址',
                           '留空 = 本地演示模式（离线可用）\n填写 https://… 后登录/注册走真实接口\n'
                           '（http:// 仅 debug 包可用，正式包会被系统禁止明文传输）'),
-                      const SizedBox(height: 4),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          '接口约定：POST {地址}/api/v1/auth/login、/auth/register、/auth/logout\n响应格式：{token, user:{id,nickname,avatar,phone}}',
-                          style: const TextStyle(
-                              fontSize: 11, color: AppColors.textHint, height: 1.5),
+                      // 开发者接口约定：仅当已填写后端地址时才展示，普通用户（本地演示模式）不暴露
+                      // POST {地址}/api/v1/... 这类开发者信息（2026-09-15 落实 P1#7 审计建议）。
+                      if (_authServer.text.trim().isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '接口约定：POST {地址}/api/v1/auth/login、/auth/register、/auth/logout\n响应格式：{token, user:{id,nickname,avatar,phone}}',
+                            style: const TextStyle(
+                                fontSize: 11, color: AppColors.textHint, height: 1.5),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
+                        const SizedBox(height: 10),
+                      ] else
+                        const SizedBox(height: 10),
                       Row(
                         children: [
                           FilledButton.icon(

@@ -256,30 +256,41 @@ class _SceneryDetailPageState extends ConsumerState<SceneryDetailPage> {
           _InfoRow(icon: Icons.schedule, label: '开放时间', value: item.openTime),
           const Divider(height: 1, color: AppColors.divider),
           _InfoRow(
-              icon: Icons.place_outlined,
-              label: '地址',
-              value: item.address,
-              trailing: TextButton(
-                onPressed: () {
-                  // 有坐标则带入聚焦导航；否则打开附近地图（我的位置/城市）
-                  if (item.latitude != 0) {
-                    context.push(
-                      '/nearby',
-                      extra: NearbyFocus(
-                        lat: item.latitude,
-                        lng: item.longitude,
-                        name: item.name,
-                        type: 'scenery',
-                      ),
-                    );
-                  } else {
-                    context.push('/nearby');
-                  }
-                },
-                child: Text(item.latitude != 0 ? '导航' : '附近',
-                    style: const TextStyle(
-                        fontSize: 13, color: AppColors.primary)),
-              )),
+            icon: Icons.place_outlined,
+            label: '地址',
+            value: item.address,
+            trailing: TextButton(
+              onPressed: () {
+                // 有坐标则带入聚焦导航；否则打开附近地图（我的位置/城市）
+                if (item.latitude != 0) {
+                  context.push(
+                    '/nearby',
+                    extra: NearbyFocus(
+                      lat: item.latitude,
+                      lng: item.longitude,
+                      name: item.name,
+                      type: 'scenery',
+                    ),
+                  );
+                } else {
+                  context.push('/nearby');
+                }
+              },
+              // 紧凑样式：去掉 TextButton 默认可点高度(min ~36)与内边距，
+              // 让「导航」文字与地址首行同一基线对齐（2026-09-15 修复「导航按钮未对齐」）。
+              // 否则地址换行成 2 行时，按钮文字被顶到按钮框中部，与首行错开。
+              style: TextButton.styleFrom(
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: EdgeInsets.zero,
+                alignment: Alignment.centerLeft,
+                textStyle: const TextStyle(fontSize: 13, height: 1.4),
+              ),
+              child: Text(item.latitude != 0 ? '导航' : '附近',
+                  style: const TextStyle(
+                      fontSize: 13, height: 1.4, color: AppColors.primary)),
+            ),
+          ),
         ],
       ),
     );

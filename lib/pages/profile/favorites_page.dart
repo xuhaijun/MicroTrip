@@ -102,6 +102,18 @@ class _FavoritesPageState extends State<FavoritesPage>
         icon: type == FavoriteType.food ? Icons.restaurant : Icons.landscape,
         text: type == FavoriteType.food ? '还没有收藏美食' : '还没有收藏美景',
         hint: '发现页的推荐内容上线收藏能力后会出现在这里',
+        action: SizedBox(
+          width: 168,
+          child: OutlinedButton.icon(
+            onPressed: () => context.push('/discover'),
+            icon: const Icon(Icons.explore_outlined, size: 18),
+            label: const Text('去发现好去处'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+            ),
+          ),
+        ),
       );
     }
     return ListView.builder(

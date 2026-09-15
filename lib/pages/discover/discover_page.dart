@@ -374,11 +374,12 @@ class _SmartRecommendState extends ConsumerState<_SmartRecommend> {
                   ],
                 ),
               ),
-              // 重生成按钮：原 GestureDetector 无点击反馈 → 改用 InkWell 提供水波纹；
-              // 按钮上的「加载转圈」与「刷新图标」功能重复，按需求去掉转圈，仅留刷新图标，
-              // 加载时禁用并降低透明度（2026-09-14）。
+              // 重生成按钮（2026-09-15 优化）：
+              // 加载时禁用点击，并把静态 refresh 图标换成自旋 CircularProgressIndicator，
+              // 让用户明确看到「正在生成」而不是像卡住——结果区在已有内容时本就不显示大转圈，
+              // 按钮上的小转圈正好补上这段空白反馈。
               Opacity(
-                opacity: _loading ? 0.5 : 1.0,
+                opacity: _loading ? 0.6 : 1.0,
                 child: InkWell(
                   onTap: _loading ? null : _generate,
                   borderRadius: BorderRadius.circular(AppRadius.round),
@@ -389,11 +390,21 @@ class _SmartRecommendState extends ConsumerState<_SmartRecommend> {
                       color: Colors.white.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(AppRadius.round),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.refresh, color: Colors.white, size: 14),
-                        SizedBox(width: 4),
-                        Text('重生成',
+                        _loading
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.refresh,
+                                color: Colors.white, size: 14),
+                        const SizedBox(width: 4),
+                        const Text('重生成',
                             style:
                                 TextStyle(fontSize: 12, color: Colors.white)),
                       ],

@@ -11,7 +11,7 @@ import 'package:micro_trip/services/lunar_service.dart';
 /// 同一套规则：顶部标签、休红/班橙、阴历与休/班并存显示、补班的周末数字不标红。
 ///
 /// 固定 initialDate=2026-09-25（该月数据与万年历用例一致）：
-///   09-19 国庆调休（班，周六）/ 09-25 / 26 / 27 中秋节（休）/ 09-20 普通周日
+///   09-20 国庆调休（班，周日）/ 09-25 / 26 / 27 中秋节（休）/ 09-19 普通周六
 void main() {
   Finder dayCell(String dayText) => find
       .ancestor(
@@ -48,16 +48,16 @@ void main() {
   testWidgets('调休补班显示「班」，且补班周六的数字不标红', (tester) async {
     await pumpMini(tester);
 
-    final cell = dayCell('19');
+    final cell = dayCell('20');
     expect(find.descendant(of: cell, matching: find.text('班')), findsOneWidget,
-        reason: '09-19 国庆调休补班应显示「班」');
+        reason: '09-20 国庆调休补班应显示「班」');
 
-    final workDayNum = tester.widget<Text>(find.text('19'));
+    final workDayNum = tester.widget<Text>(find.text('20'));
     expect(workDayNum.style?.color, isNot(AppColors.danger),
-        reason: '补班周六不应标红（与万年历页同一规则）');
+        reason: '补班周日不应标红（与万年历页同一规则）');
 
-    // 09-20 普通周日仍标红
-    final weekendNum = tester.widget<Text>(find.text('20'));
+    // 09-19 普通周六仍标红
+    final weekendNum = tester.widget<Text>(find.text('19'));
     expect(weekendNum.style?.color, AppColors.danger,
         reason: '正常周末日期数字仍应标红');
   });
@@ -88,19 +88,19 @@ void main() {
         ))
         .dy;
 
-    // 2026-09 网格（周日起始）：09-13(普通日) 与 09-19(调休补班) 同行
-    expect(numberTop('13'), closeTo(numberTop('19'), 0.5),
+    // 2026-09 网格（周日起始）：第 4 行 = 09-20(调休补班) 与 09-21(普通日) 同行
+    expect(numberTop('21'), closeTo(numberTop('20'), 0.5),
         reason: '同行内「有班」的格子不应把日期数字顶偏');
-    // 09-20(普通日) 与 09-25(中秋「休」) 同行
-    expect(numberTop('20'), closeTo(numberTop('25'), 0.5),
+    // 第 4 行：09-24(普通日) 与 09-25(中秋「休」) 同行
+    expect(numberTop('24'), closeTo(numberTop('25'), 0.5),
         reason: '同行内「有休」的格子不应把日期数字顶偏');
   });
 
   testWidgets('普通日期仍显示农历标签，不出现休/班', (tester) async {
     await pumpMini(tester);
 
-    final lunar = LunarService.getLunarDayLabel(DateTime(2026, 9, 20));
-    final cell = dayCell('20');
+    final lunar = LunarService.getLunarDayLabel(DateTime(2026, 9, 19));
+    final cell = dayCell('19');
 
     expect(find.descendant(of: cell, matching: find.text(lunar)),
         findsOneWidget, reason: '普通日期仍是农历标签');

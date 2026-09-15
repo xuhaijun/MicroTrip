@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/animations/anim_effects.dart';
@@ -12,11 +13,25 @@ import '../shared/widgets/common_widgets.dart';
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
 
-  /// 去评分：无应用市场，降级为提示
-  void _rate(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('应用市场评分功能暂未开放，感谢你的支持～')),
-    );
+  /// 与 Android 原生约定的通道（MainActivity 中注册），用于唤起应用市场。
+  static const MethodChannel _marketChannel =
+      MethodChannel('com.xuhai.micro_trip/market');
+
+  /// 去评分：按渠道跳对应应用市场。
+  /// 用 market:// 唤起设备默认应用商店——该商店由构建渠道决定
+  /// （华为包→AppGallery、小米包→小米应用商店…），天然「按渠道正确」；
+  /// 未安装商店 / iOS 未实现该通道时降级为提示（2026-09-15 落实 P2#9 审计建议）。
+  Future<void> _rate(BuildContext context) async {
+    const uri = 'market://details?id=com.xuhai.micro_trip';
+    try {
+      await _marketChannel.invokeMethod<void>('openMarket', {'uri': uri});
+    } on PlatformException {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('未找到应用市场，感谢你的支持～')),
+        );
+      }
+    }
   }
 
   @override

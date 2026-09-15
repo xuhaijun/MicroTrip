@@ -146,32 +146,61 @@ class SectionTitle extends StatelessWidget {
 }
 
 /// 空状态（对应小程序 components/empty-state）
+///
+/// 视觉：图标外套品牌柔色圆底，让空态有统一的「插画感」（不再是一枚裸图标），
+/// 全 App 空态风格一致（2026-09-15 落实 P2#10 审计建议）。
+/// 可选的 [action] 用于承载「引导按钮」（如「去发现好去处」），把纯提示升级为可行动。
 class EmptyState extends StatelessWidget {
   const EmptyState({
     super.key,
     required this.icon,
     required this.text,
     this.hint = '',
+    this.action,
   });
 
   final IconData icon;
   final String text;
   final String hint;
 
+  /// 可选引导按钮（如「去发现」「去添加」），为空则不显示。
+  final Widget? action;
+
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 56, color: AppColors.textHint),
-          const SizedBox(height: 12),
-          Text(text, style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-          if (hint.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(hint, style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 柔色品牌圆底：统一空态插画观感
+            Container(
+              width: 88,
+              height: 88,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 44, color: AppColors.primary),
+            ),
+            const SizedBox(height: 16),
+            Text(text,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+            if (hint.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(hint,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+            ],
+            if (action != null) ...[
+              const SizedBox(height: 16),
+              action!,
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
