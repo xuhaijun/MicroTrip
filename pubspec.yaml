@@ -80,14 +80,15 @@ flutter_native_splash:
   # 品牌背景色（与 launcher 图标底色、首页渐变一致）
   color: "#4FC3F7"
   color_dark: "#0288D1"
-  # 居中 Logo（复用 launcher 前景图）
-  image: "assets/images/logo.png"
-  image_dark: "assets/images/logo.png"
-  # 原生闪屏品牌名（Logo 正下方的「微旅途」）：flutter_native_splash 2.x 不支持
-  # title 文本参数，故用 branding 图片承载，且 Android 12+ 的 Splash API 也会显示。
-  branding: "assets/images/splash_branding.png"
-  branding_dark: "assets/images/splash_branding.png"
-  # Android 12+ 的 Splash API（icon 模式）同样套用 Logo + branding
+  # 居中品牌锁定图 = Logo + 「微旅途」整组，整块居中显示。
+  # flutter_native_splash 2.x 不支持 title 文本参数，名称只能烙进图片；
+  # 而且 branding 槽位是贴屏幕底边、与居中 Logo 之间会留出大片空白，
+  # 故 Android 12 以下的路径改用「Logo+名称」合一的锁定图，视觉更紧凑。
+  # 注意：源图像素 / 4 = 屏幕上显示的 dp（见 scripts/gen_splash_assets.py）
+  image: "assets/images/splash_lockup.png"
+  image_dark: "assets/images/splash_lockup.png"
+  # Android 12+ 的 Splash API 走系统「图标 + branding」槽位：
+  # 图标由系统按标准尺寸摆放（故仍给方形 logo），名称继续用 branding 承载。
   android_12:
     image: "assets/images/logo.png"
     branding: "assets/images/splash_branding.png"
