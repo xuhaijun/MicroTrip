@@ -87,11 +87,11 @@ flutter_native_splash:
   # 注意：源图像素 / 4 = 屏幕上显示的 dp（见 scripts/gen_splash_assets.py）
   image: "assets/images/splash_lockup.png"
   image_dark: "assets/images/splash_lockup.png"
-  # Android 12+ 的 Splash API 走系统「图标 + branding」槽位：
-  # 图标由系统按标准尺寸摆放（故仍给方形 logo），名称继续用 branding 承载。
+  # Android 12+ 用同一整组内容做成「正方形」锁定图（系统 SplashScreen 的
+  # animatedIcon 只接受方形图；非方形实测在真机上完全不显示 icon）。
+  # 不再用 branding 把名称贴屏幕底边（会留出大片空白、视觉松散，真机被判定不理想）。
   android_12:
-    image: "assets/images/logo.png"
-    branding: "assets/images/splash_branding.png"
+    image: "assets/images/splash_lockup_square.png"
     color: "#4FC3F7"
     color_dark: "#0288D1"
   android: true

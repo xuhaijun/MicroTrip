@@ -34,6 +34,9 @@ TEXT_DP = 24          # 品牌名墨迹高度（原 54dp 过大）
 GAP_DP = 28           # Logo 底边 -> 品牌名顶边 的间距
 BRAND_BOTTOM_DP = 24  # Android 12+ branding 距屏幕底部留白（靠底部透明内边距实现）
 BRAND_PAD_X_DP = 12   # branding 画布左右各留一点安全边
+# ---- Android 12+ 方形整图标规格 ----
+SQUARE_DP = 173       # 方形锁定图边长（满铺圆角方块，显示约 173dp，小于旧版 256dp）
+SQUARE_TEXT_DP = 30   # 方形图内「微旅途」墨迹高度
 
 SS = 4                # 超采样倍数：先按 SS 倍渲染文字再缩小，保证小字边缘锐利
 
@@ -41,6 +44,7 @@ SS = 4                # 超采样倍数：先按 SS 倍渲染文字再缩小，�
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOGO_SRC = os.path.join(ROOT, "assets", "images", "logo.png")
 OUT_LOCKUP = os.path.join(ROOT, "assets", "images", "splash_lockup.png")
+OUT_LOCKUP_SQUARE = os.path.join(ROOT, "assets", "images", "splash_lockup_square.png")
 OUT_BRANDING = os.path.join(ROOT, "assets", "images", "splash_branding.png")
 
 BRAND_TEXT = "微旅途"
@@ -168,6 +172,24 @@ def main() -> int:
     print(f"写出 {os.path.relpath(OUT_LOCKUP, ROOT)}  {canvas_w}x{canvas_h}px -> "
           f"{canvas_w / SCALE:.0f} x {canvas_h / SCALE:.0f} dp"
           f"（Logo {LOGO_DP}dp + 间距 {GAP_DP}dp + 文字 {TEXT_DP}dp）")
+
+    # ---- 1b) 方形锁定图：Android 12+ SplashScreen 的 animatedIcon ----
+    # 关键（真机 EBG-AN00 / Android 12 / 鸿蒙 4 实测）：华为「自适应闪屏」只接受
+    # **满铺、几乎无透明留白**的方形图；旧版「透明画布 + 中央小 logo」（四周 ~50%
+    # 透明）会被系统静默丢弃 icon，只剩纯蓝底——即「logo 不见了」的根因。
+    # 故以 logo.png（满铺圆角方块）为底，在 pin 下方叠加品牌名，做出
+    # 「满铺圆角方块 + pin + 微旅途」整图标；仍交给 flutter_native_splash
+    # 生成各密度 android12splash.png。显示约 173dp（< 旧版 256dp，已缩小）。
+    side = dp2px(SQUARE_DP)                       # 692px ≈ 173dp
+    square = Image.open(LOGO_SRC).convert("RGBA").resize((side, side), Image.LANCZOS)
+    text2, ib2 = render_brand_text(font_path, dp2px(SQUARE_TEXT_DP))
+    # pin 中心≈43%、底≈66%；品牌名墨迹中心放在 82% 处，避开通区域重叠
+    t2_top = int(side * 0.82) - (ib2[3] + ib2[1]) // 2
+    square.alpha_composite(text2, ((side - text2.width) // 2, t2_top))
+    square.save(OUT_LOCKUP_SQUARE)
+    print(f"写出 {os.path.relpath(OUT_LOCKUP_SQUARE, ROOT)}  {side}x{side}px -> "
+          f"{side / SCALE:.0f} x {side / SCALE:.0f} dp"
+          f"（满铺圆角方块 + pin + 文字 {SQUARE_TEXT_DP}dp；Android 12+ 用）")
 
     # ---- 2) 仅品牌名（Android 12+ branding 槽位）----
     pad_x = dp2px(BRAND_PAD_X_DP)

@@ -37,6 +37,24 @@ class _WeatherDetailPageState extends ConsumerState<WeatherDetailPage> {
     if (mounted) setState(() {});
   }
 
+  /// 右上角刷新按钮入口：强制重拉并给出明确反馈。
+  /// 原「无反应」根因：按钮 fire-and-forget 调 _load，既无 loading 态也无 Toast，
+  /// 且天气数值秒级不变（API 失败还会静默降级 Mock），用户感知像死按钮。
+  Future<void> _refreshWithFeedback() async {
+    final city = ref.read(cityProvider);
+    await ref.read(weatherProvider(city).notifier).load(city, force: true);
+    _hourly = await WeatherService.getHourly(city);
+    if (!mounted) return;
+    setState(() {});
+    final w = ref.read(weatherProvider(city));
+    final msg = w.error != null
+        ? '刷新失败，请检查网络'
+        : (w.now?.isMock == true ? '已刷新（离线数据）' : '已刷新');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), duration: const Duration(seconds: 1)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final city = ref.watch(cityProvider);
@@ -61,8 +79,19 @@ class _WeatherDetailPageState extends ConsumerState<WeatherDetailPage> {
               ),
               IconButton(
                 tooltip: '刷新',
-                onPressed: () => _load(force: true),
-                icon: const Icon(Icons.refresh, color: Colors.white),
+                // 加载中禁用并显示转圈，给出明确点击反馈（修复「点了没反应」）
+                onPressed: weather.loading ? null : _refreshWithFeedback,
+                icon: weather.loading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.refresh, color: Colors.white),
               ),
             ],
           ),
